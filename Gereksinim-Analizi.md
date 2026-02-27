@@ -72,7 +72,7 @@ Tüm gereksinimlerinizi çıkardıktan sonra beraber tartışıyoruz ve son gere
 
 \## Gereksinim Dağılımları
 
-\- \[Murat Dimlit'in Gereksinimleri](Murat/Murat-Gereksinimler.md)
+[Murat Dimlit'in Gereksinimleri](Murat/Murat-Gereksinimler.md)
 
-\- \[Berra Doğruer'in Gereksinimleri](Berra/Berra-Gereksinimler.md)
+[Berra Doğruer'in Gereksinimleri](Berra/Berra-Gereksinimler.md)
 
