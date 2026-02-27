@@ -68,9 +68,6 @@ Tüm gereksinimlerinizi çıkardıktan sonra beraber tartışıyoruz ve son gere
 
 
 # Gereksinim Dağılımları
-## Gereksinim Dağılımları
-
-
 
 [Murat Dimlit'in Gereksinimleri](Murat/Murat-Gereksinimler.md)
 
