@@ -1,0 +1,2 @@
+\# Berra - Mobil Frontend Görevleri
+
