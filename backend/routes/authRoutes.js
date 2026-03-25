@@ -1,6 +1,7 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const authMiddleware = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
@@ -103,4 +104,90 @@ router.post("/login", async (req, res) => {
   }
 });
 
+router.put("/users/:userId", authMiddleware, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { name, email, password } = req.body || {};
+
+    if (parseInt(userId) !== req.user.id) {
+      return res.status(403).json({
+        message: "Başka kullanıcının bilgilerini güncelleyemezsiniz."
+      });
+    }
+
+    const user = users.find((u) => u.id === parseInt(userId));
+
+    if (!user) {
+      return res.status(404).json({
+        message: "Kullanıcı bulunamadı."
+      });
+    }
+
+    if (email) {
+      const emailOwner = users.find(
+        (u) => u.email === email && u.id !== parseInt(userId)
+      );
+
+      if (emailOwner) {
+        return res.status(409).json({
+          message: "Bu email başka bir kullanıcı tarafından kullanılıyor."
+        });
+      }
+    }
+
+    if (name) user.name = name;
+    if (email) user.email = email;
+
+    if (password) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      user.password = hashedPassword;
+    }
+
+    return res.status(200).json({
+      message: "Profil başarıyla güncellendi.",
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email
+      }
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Sunucu hatası.",
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
+
+router.delete("/users/:userId", authMiddleware, async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    if (parseInt(userId) !== req.user.id) {
+      return res.status(403).json({
+        message: "Başka kullanıcının hesabını silemezsiniz."
+      });
+    }
+
+    const userIndex = users.findIndex((u) => u.id === parseInt(userId));
+
+    if (userIndex === -1) {
+      return res.status(404).json({
+        message: "Kullanıcı bulunamadı."
+      });
+    }
+
+    users.splice(userIndex, 1);
+
+    return res.status(200).json({
+      message: "Hesap başarıyla silindi."
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Sunucu hatası.",
+      error: error.message
+    });
+  }
+});
