@@ -3,6 +3,7 @@ const cors = require("cors");
 require("dotenv").config();
 
 const authRoutes = require("./routes/authRoutes");
+const spaceObjectRoutes = require("./routes/spaceObjectRoutes");
 
 const app = express();
 
@@ -14,6 +15,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/auth", authRoutes);
+app.use("/space-objects", spaceObjectRoutes);
 
 const PORT = process.env.PORT || 5000;
 
