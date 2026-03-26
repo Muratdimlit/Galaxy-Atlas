@@ -1,121 +1,361 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import './App.css'
 
 function App() {
-  const [favorites, setFavorites] = useState([])
-  const [comments, setComments] = useState([])
-  const [newComment, setNewComment] = useState('')
-  const [editingCommentId, setEditingCommentId] = useState(null)
-  const [editedComment, setEditedComment] = useState('')
+  const fallbackObjects = [
+    {
+      id: 1,
+      name: 'Hubble',
+      type: 'UYDU',
+      description: 'Dünya yörüngesinde gözlem yapan gelişmiş uzay teleskobu.',
+      status: 'Aktif',
+      orbit: 'Dünya Alçak Yörünge',
+      risk: 'Düşük'
+    },
+    {
+      id: 2,
+      name: 'Falcon 9',
+      type: 'ROKET',
+      description: 'Yeniden kullanılabilir modern fırlatma roketi.',
+      status: 'Hazır',
+      orbit: 'Fırlatma Platformu',
+      risk: 'Düşük'
+    },
+    {
+      id: 3,
+      name: 'Apophis',
+      type: 'ASTEROID',
+      description: "Dünya'ya yakın geçişleriyle dikkat çeken gök cismi.",
+      status: 'İzleniyor',
+      orbit: 'Güneş Yörüngesi',
+      risk: 'Orta'
+    }
+  ]
 
-  const loadFavorites = () => {
-    fetch('http://localhost:8080/favorites?userId=1')
-      .then((res) => res.json())
-      .then((data) => {
-        console.log('Favoriler:', data)
-        setFavorites(data)
-      })
-      .catch((err) => console.error('Favori listeleme hatası:', err))
+  const [spaceObjects, setSpaceObjects] = useState(fallbackObjects)
+
+  const [showAuthPanel, setShowAuthPanel] = useState(false)
+  const [authMode, setAuthMode] = useState('login')
+  const [authMessage, setAuthMessage] = useState('')
+  const [loggedInUser, setLoggedInUser] = useState(null)
+
+  const [showProfilePanel, setShowProfilePanel] = useState(false)
+  const [profileForm, setProfileForm] = useState({
+    name: '',
+    email: '',
+    password: ''
+  })
+  const [profileMessage, setProfileMessage] = useState('')
+
+  const [registerForm, setRegisterForm] = useState({
+    name: '',
+    email: '',
+    password: ''
+  })
+
+  const [loginForm, setLoginForm] = useState({
+    email: '',
+    password: ''
+  })
+
+  const [activePage, setActivePage] = useState('home')
+  const [selectedObject, setSelectedObject] = useState(null)
+
+  const [filterType, setFilterType] = useState('ALL')
+  const [filterStatus, setFilterStatus] = useState('ALL')
+  const [filterRisk, setFilterRisk] = useState('ALL')
+
+  const [compareSelection, setCompareSelection] = useState([])
+
+  const openAuthModal = (mode = 'login') => {
+    setAuthMode(mode)
+    setAuthMessage('')
+    setShowAuthPanel(true)
   }
 
-  const loadComments = () => {
-    fetch('http://localhost:8080/comments?spaceObjectId=1')
-      .then((res) => res.json())
-      .then((data) => {
-        console.log('Yorumlar:', data)
-        setComments(data)
+  const closeAuthModal = () => {
+    setShowAuthPanel(false)
+    setAuthMessage('')
+  }
+
+  const openProfilePanel = () => {
+    if (!loggedInUser) return
+
+    setProfileForm({
+      name: loggedInUser.name || '',
+      email: loggedInUser.email || '',
+      password: loggedInUser.password || ''
+    })
+    setProfileMessage('')
+    setShowProfilePanel(true)
+  }
+
+  const closeProfilePanel = () => {
+    setShowProfilePanel(false)
+    setProfileMessage('')
+  }
+
+  const loadSpaceObjects = () => {
+    fetch('http://localhost:8080/space-objects')
+      .then((res) => {
+        if (!res.ok) throw new Error('Nesneler alınamadı')
+        return res.json()
       })
-      .catch((err) => console.error('Yorum listeleme hatası:', err))
+      .then((data) => {
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped = data.map((item) => ({
+            id: item.id,
+            name: item.name || 'Bilinmeyen Nesne',
+            type: String(item.type || 'NESNE').toUpperCase(),
+            description: item.description || 'Detay bilgisi daha sonra eklenecek.',
+            status: item.status || 'Aktif',
+            orbit: item.orbit || 'Bilinmiyor',
+            risk: item.risk || 'Düşük'
+          }))
+          setSpaceObjects(mapped)
+        } else {
+          setSpaceObjects(fallbackObjects)
+        }
+      })
+      .catch(() => {
+        setSpaceObjects(fallbackObjects)
+      })
   }
 
   useEffect(() => {
-    loadFavorites()
-    loadComments()
+    const savedUser = localStorage.getItem('loggedInUser')
+    if (savedUser) {
+      setLoggedInUser(JSON.parse(savedUser))
+    }
+    loadSpaceObjects()
   }, [])
 
-  const addFavorite = () => {
-    fetch('http://localhost:8080/favorites', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        userId: 1,
-        spaceObjectId: 1
-      })
+  const filteredObjects = useMemo(() => {
+    return spaceObjects.filter((object) => {
+      const typeMatch = filterType === 'ALL' || object.type === filterType
+      const statusMatch = filterStatus === 'ALL' || object.status === filterStatus
+      const riskMatch = filterRisk === 'ALL' || object.risk === filterRisk
+
+      return typeMatch && statusMatch && riskMatch
     })
-      .then((res) => res.json())
-      .then(() => loadFavorites())
-      .catch((err) => console.error('Favori ekleme hatası:', err))
+  }, [spaceObjects, filterType, filterStatus, filterRisk])
+
+  const comparedObjects = useMemo(() => {
+    return spaceObjects.filter((object) => compareSelection.includes(object.id))
+  }, [spaceObjects, compareSelection])
+
+  const toggleCompareSelection = (objectId) => {
+    if (!loggedInUser) {
+      setAuthMessage('Karşılaştırma için önce giriş yapmalısınız.')
+      openAuthModal('login')
+      return
+    }
+
+    if (compareSelection.includes(objectId)) {
+      setCompareSelection(compareSelection.filter((id) => id !== objectId))
+      return
+    }
+
+    if (compareSelection.length >= 2) {
+      alert('En fazla 2 nesne seçebilirsiniz.')
+      return
+    }
+
+    setCompareSelection([...compareSelection, objectId])
   }
 
-  const deleteFavorite = (id) => {
-    fetch(`http://localhost:8080/favorites/${id}`, {
-      method: 'DELETE'
-    })
-      .then(() => loadFavorites())
-      .catch((err) => console.error('Favori silme hatası:', err))
+  const clearCompareSelection = () => {
+    setCompareSelection([])
   }
 
-  const addComment = () => {
-    if (!newComment.trim()) return
+  const openObjectDetail = (object) => {
+    setSelectedObject(object)
+  }
 
-    fetch('http://localhost:8080/comments', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        userId: 1,
-        spaceObjectId: 1,
-        content: newComment
+  const closeObjectDetail = () => {
+    setSelectedObject(null)
+  }
+
+  const handleRegister = async () => {
+    setAuthMessage('')
+
+    try {
+      const response = await fetch('http://localhost:8080/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(registerForm)
       })
-    })
-      .then((res) => res.json())
-      .then(() => {
-        setNewComment('')
-        loadComments()
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setAuthMessage(data.message || 'Kayıt işlemi başarısız.')
+        return
+      }
+
+      setAuthMessage('Kayıt başarılı. Şimdi giriş yapabilirsiniz.')
+      setRegisterForm({
+        name: '',
+        email: '',
+        password: ''
       })
-      .catch((err) => console.error('Yorum ekleme hatası:', err))
+      setAuthMode('login')
+    } catch (error) {
+      console.error('Kayıt olma hatası:', error)
+      setAuthMessage('Sunucuya bağlanırken hata oluştu.')
+    }
   }
 
-  const startEditingComment = (comment) => {
-    setEditingCommentId(comment.id)
-    setEditedComment(comment.content)
-  }
+  const handleLogin = async () => {
+    setAuthMessage('')
 
-  const cancelEditingComment = () => {
-    setEditingCommentId(null)
-    setEditedComment('')
-  }
-
-  const saveUpdatedComment = (id) => {
-    if (!editedComment.trim()) return
-
-    fetch(`http://localhost:8080/comments/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        content: editedComment
+    try {
+      const response = await fetch('http://localhost:8080/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(loginForm)
       })
-    })
-      .then((res) => res.json())
-      .then(() => {
-        setEditingCommentId(null)
-        setEditedComment('')
-        loadComments()
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setAuthMessage(data.message || 'Giriş başarısız.')
+        return
+      }
+
+      setLoggedInUser(data.user)
+      localStorage.setItem('loggedInUser', JSON.stringify(data.user))
+      if (data.token) {
+        localStorage.setItem('token', data.token)
+      }
+
+      setAuthMessage('')
+      setLoginForm({
+        email: '',
+        password: ''
       })
-      .catch((err) => console.error('Yorum güncelleme hatası:', err))
+      setShowAuthPanel(false)
+    } catch (error) {
+      console.error('Giriş yapma hatası:', error)
+      setAuthMessage('Sunucuya bağlanırken hata oluştu.')
+    }
   }
 
-  const deleteComment = (id) => {
-    fetch(`http://localhost:8080/comments/${id}`, {
-      method: 'DELETE'
-    })
-      .then(() => loadComments())
-      .catch((err) => console.error('Yorum silme hatası:', err))
+  const handleProfileUpdate = async () => {
+    if (!loggedInUser) return
+
+    setProfileMessage('')
+
+    try {
+      const response = await fetch(
+        `http://localhost:8080/auth/update/${loggedInUser.id}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(profileForm)
+        }
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setProfileMessage(data.message || 'Profil güncellenemedi.')
+        return
+      }
+
+      setLoggedInUser(data.user)
+      localStorage.setItem('loggedInUser', JSON.stringify(data.user))
+      setProfileMessage('Profil başarıyla güncellendi.')
+    } catch (error) {
+      console.error('Profil güncelleme hatası:', error)
+      setProfileMessage('Sunucuya bağlanırken hata oluştu.')
+    }
+  }
+
+  const handleDeleteAccount = async () => {
+    if (!loggedInUser) return
+
+    const confirmDelete = window.confirm(
+      'Hesabınızı silmek istediğinize emin misiniz?'
+    )
+
+    if (!confirmDelete) return
+
+    try {
+      const response = await fetch(
+        `http://localhost:8080/auth/delete/${loggedInUser.id}`,
+        {
+          method: 'DELETE'
+        }
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setProfileMessage(data.message || 'Hesap silinemedi.')
+        return
+      }
+
+      closeProfilePanel()
+      logout()
+      alert('Hesap başarıyla silindi.')
+    } catch (error) {
+      console.error('Hesap silme hatası:', error)
+      setProfileMessage('Sunucuya bağlanırken hata oluştu.')
+    }
+  }
+
+  const logout = () => {
+    setLoggedInUser(null)
+    setAuthMessage('')
+    setShowAuthPanel(false)
+    setAuthMode('login')
+    setSelectedObject(null)
+    setShowProfilePanel(false)
+    setProfileMessage('')
+    setCompareSelection([])
+
+    localStorage.removeItem('loggedInUser')
+    localStorage.removeItem('token')
+  }
+
+  const renderObjectCard = (object) => {
+    const isSelectedForCompare = compareSelection.includes(object.id)
+
+    return (
+      <div className="card object-card" key={object.id}>
+        <span className="card-type">{object.type}</span>
+        <h3>{object.name}</h3>
+        <p className="card-desc">{object.description}</p>
+
+        {loggedInUser && (
+          <div style={{ marginBottom: '14px' }}>
+            <button
+              className={`btn ${isSelectedForCompare ? 'btn-primary' : 'btn-outline'}`}
+              onClick={() => toggleCompareSelection(object.id)}
+            >
+              {isSelectedForCompare ? 'Seçildi' : 'Karşılaştır'}
+            </button>
+          </div>
+        )}
+
+        <div className="card-footer">
+          <span>Durum: {object.status}</span>
+          <button
+            className="btn btn-outline"
+            onClick={() => openObjectDetail(object)}
+          >
+            Detay
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -136,306 +376,508 @@ function App() {
         <div className="logo">Galaxy Atlas</div>
 
         <nav className="nav-links">
-          <a href="#home">Ana Sayfa</a>
-          <a href="#objects">Nesneler</a>
+          <button
+            className="nav-link-btn"
+            onClick={() => setActivePage('home')}
+          >
+            Ana Sayfa
+          </button>
+          <button
+            className="nav-link-btn"
+            onClick={() => setActivePage('objects')}
+          >
+            Nesneler
+          </button>
           <a href="#features">Özellikler</a>
-          <a href="#favorites">Favoriler</a>
-          <a href="#comments">Yorumlar</a>
           <a href="#map">Harita</a>
           <a href="#about">Hakkında</a>
         </nav>
 
         <div className="nav-actions">
-          <button className="btn btn-outline">Giriş Yap</button>
-          <button className="btn btn-primary">Kayıt Ol</button>
+          {loggedInUser ? (
+            <>
+              <span style={{ color: 'white', marginRight: '12px' }}>
+                Hoş geldin, {loggedInUser.name}
+              </span>
+              <button className="btn btn-outline" onClick={openProfilePanel}>
+                Profil
+              </button>
+              <button className="btn btn-outline" onClick={logout}>
+                Çıkış Yap
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={() => openAuthModal('login')}
+              >
+                Giriş Yap
+              </button>
+
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => openAuthModal('register')}
+              >
+                Kayıt Ol
+              </button>
+            </>
+          )}
         </div>
       </header>
 
-      <section className="hero" id="home">
-        <div className="hero-content">
-          <span className="badge">Uzay Teknolojileri • Takip Platformu</span>
-          <h1>Roket, Uydu ve Asteroidleri Tek Platformda Takip Et</h1>
-          <p>
-            Galaxy Atlas; uzay nesnelerini listeleyen, detaylarını gösteren,
-            karşılaştırma ve inceleme imkânı sunan modern bir web platformudur.
-          </p>
+      {showAuthPanel && (
+        <div className="auth-modal-overlay">
+          <div className="card auth-modal-card">
+            <h2 className="auth-title">
+              {authMode === 'login' ? 'Giriş Yap' : 'Kayıt Ol'}
+            </h2>
 
-          <div className="hero-buttons">
-            <button className="btn btn-primary">Keşfet</button>
-            <button className="btn btn-outline">Detayları İncele</button>
-          </div>
+            {authMode === 'register' ? (
+              <>
+                <input
+                  type="text"
+                  placeholder="Ad Soyad"
+                  value={registerForm.name}
+                  onChange={(e) =>
+                    setRegisterForm({ ...registerForm, name: e.target.value })
+                  }
+                  className="auth-input"
+                />
 
-          <div className="hero-stats">
-            <div className="stat-box">
-              <h3>120+</h3>
-              <p>Uzay Nesnesi</p>
-            </div>
-            <div className="stat-box">
-              <h3>24/7</h3>
-              <p>Takip Sistemi</p>
-            </div>
-            <div className="stat-box">
-              <h3>REST</h3>
-              <p>API Destekli</p>
-            </div>
-          </div>
-        </div>
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={registerForm.email}
+                  onChange={(e) =>
+                    setRegisterForm({ ...registerForm, email: e.target.value })
+                  }
+                  className="auth-input"
+                />
 
-        <div className="hero-panel">
-          <div className="orbit-card">
-            <p className="mini-title">Canlı İzleme Kartı</p>
-            <h3>Hubble Telescope</h3>
-            <p>Tür: Uydu</p>
-            <p>Durum: Aktif</p>
-            <p>Yörünge: Dünya Alçak Yörünge</p>
-          </div>
+                <input
+                  type="password"
+                  placeholder="Şifre"
+                  value={registerForm.password}
+                  onChange={(e) =>
+                    setRegisterForm({
+                      ...registerForm,
+                      password: e.target.value
+                    })
+                  }
+                  className="auth-input"
+                />
 
-          <div className="glow-circle glow-1"></div>
-          <div className="glow-circle glow-2"></div>
-          <div className="floating-rock rock-1"></div>
-          <div className="floating-rock rock-2"></div>
-        </div>
-      </section>
+                <button className="btn btn-primary" onClick={handleRegister}>
+                  Kayıt Ol
+                </button>
+              </>
+            ) : (
+              <>
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={loginForm.email}
+                  onChange={(e) =>
+                    setLoginForm({ ...loginForm, email: e.target.value })
+                  }
+                  className="auth-input"
+                />
 
-      <section className="objects section" id="objects">
-        <div className="section-header">
-          <h2>Öne Çıkan Uzay Nesneleri</h2>
-          <p>
-            Platform üzerinden farklı türlerde uzay nesneleri görüntülenebilir,
-            detayları incelenebilir ve sistematik olarak takip edilebilir.
-          </p>
-        </div>
+                <input
+                  type="password"
+                  placeholder="Şifre"
+                  value={loginForm.password}
+                  onChange={(e) =>
+                    setLoginForm({ ...loginForm, password: e.target.value })
+                  }
+                  className="auth-input"
+                />
 
-        <div className="card-container">
-          <div className="card">
-            <span className="card-type">UYDU</span>
-            <h3>Hubble</h3>
-            <p className="card-desc">
-              Dünya yörüngesinde gözlem yapan gelişmiş uzay teleskobu.
-            </p>
-            <div className="card-footer">
-              <span>Durum: Aktif</span>
-              <a href="/">Detay</a>
-            </div>
-          </div>
+                <button className="btn btn-primary" onClick={handleLogin}>
+                  Giriş Yap
+                </button>
+              </>
+            )}
 
-          <div className="card">
-            <span className="card-type">ROKET</span>
-            <h3>Falcon 9</h3>
-            <p className="card-desc">
-              Yeniden kullanılabilir modern fırlatma roketi.
-            </p>
-            <div className="card-footer">
-              <span>Durum: Hazır</span>
-              <a href="/">Detay</a>
-            </div>
-          </div>
+            {authMessage && <p className="auth-message">{authMessage}</p>}
 
-          <div className="card">
-            <span className="card-type">ASTEROID</span>
-            <h3>Apophis</h3>
-            <p className="card-desc">
-              Dünya'ya yakın geçişleriyle dikkat çeken gök cismi.
-            </p>
-            <div className="card-footer">
-              <span>Risk Seviyesi: Orta</span>
-              <a href="/">Detay</a>
-            </div>
-          </div>
-        </div>
-      </section>
+            <div className="auth-actions-row">
+              {authMode === 'login' ? (
+                <button
+                  className="btn btn-outline"
+                  onClick={() => {
+                    setAuthMode('register')
+                    setAuthMessage('')
+                  }}
+                >
+                  Hesabın yok mu? Kayıt Ol
+                </button>
+              ) : (
+                <button
+                  className="btn btn-outline"
+                  onClick={() => {
+                    setAuthMode('login')
+                    setAuthMessage('')
+                  }}
+                >
+                  Zaten hesabın var mı? Giriş Yap
+                </button>
+              )}
 
-      <section className="features section" id="features">
-        <div className="section-header">
-          <span className="section-tag">Platform Özellikleri</span>
-          <h2>Neler Sunuyor?</h2>
-        </div>
-
-        <div className="feature-grid">
-          <div className="feature-card">
-            <h3>Listeleme</h3>
-            <p>Uydu, roket ve asteroid verilerini tek ekranda listeleme.</p>
-          </div>
-
-          <div className="feature-card">
-            <h3>Detay Görüntüleme</h3>
-            <p>Her nesne için açıklama, durum ve temel takip bilgileri.</p>
-          </div>
-
-          <div className="feature-card">
-            <h3>REST API</h3>
-            <p>Backend servisleri ile veri akışını sağlayan modern yapı.</p>
-          </div>
-
-          <div className="feature-card">
-            <h3>Takım Geliştirme</h3>
-            <p>GitHub branch mantığı ile geliştirilmeye uygun proje yapısı.</p>
-          </div>
-        </div>
-      </section>
-
-      <section className="section" id="favorites">
-        <div className="section-header">
-          <h2>Favorilerim</h2>
-        </div>
-
-        <div className="card-container">
-          <div className="card">
-            <h3>Favori Ekle</h3>
-            <p className="card-desc">
-              Test için sabit olarak userId=1 ve spaceObjectId=1 gönderiliyor.
-            </p>
-
-            <div className="hero-buttons">
-              <button className="btn btn-primary" onClick={addFavorite}>
-                Favoriye Ekle
+              <button className="btn btn-outline" onClick={closeAuthModal}>
+                Kapat
               </button>
             </div>
           </div>
-
-          <div className="card">
-            <h3>Favori Listem</h3>
-
-            {favorites.length === 0 ? (
-              <p className="card-desc">Henüz favori yok.</p>
-            ) : (
-              <ul style={{ listStyle: 'none', padding: 0 }}>
-                {favorites.map((fav) => (
-                  <li
-                    key={fav.id}
-                    style={{
-                      marginBottom: '12px',
-                      padding: '10px',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: '10px'
-                    }}
-                  >
-                    <p>Favori ID: {fav.id}</p>
-                    <p>Kullanıcı ID: {fav.userId}</p>
-                    <p>Uzay Nesnesi ID: {fav.spaceObjectId}</p>
-
-                    <button
-                      className="btn btn-outline"
-                      onClick={() => deleteFavorite(fav.id)}
-                    >
-                      Favoriden Çıkar
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
         </div>
-      </section>
+      )}
 
-      <section className="section" id="comments">
-        <div className="section-header">
-          <h2>Yorumlar</h2>
-        </div>
+      {showProfilePanel && (
+        <div className="auth-modal-overlay">
+          <div className="card auth-modal-card">
+            <h2 className="auth-title">Profil Bilgileri</h2>
 
-        <div className="card-container">
-          <div className="card">
-            <h3>Yorum Ekle</h3>
             <input
               type="text"
-              placeholder="Yorum yaz..."
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px',
-                marginBottom: '12px',
-                borderRadius: '10px',
-                border: '1px solid rgba(255,255,255,0.15)',
-                background: 'rgba(255,255,255,0.06)',
-                color: 'white',
-                outline: 'none'
-              }}
+              placeholder="Ad Soyad"
+              value={profileForm.name}
+              onChange={(e) =>
+                setProfileForm({ ...profileForm, name: e.target.value })
+              }
+              className="auth-input"
             />
 
-            <button className="btn btn-primary" onClick={addComment}>
-              Yorum Ekle
+            <input
+              type="email"
+              placeholder="Email"
+              value={profileForm.email}
+              onChange={(e) =>
+                setProfileForm({ ...profileForm, email: e.target.value })
+              }
+              className="auth-input"
+            />
+
+            <input
+              type="password"
+              placeholder="Şifre"
+              value={profileForm.password}
+              onChange={(e) =>
+                setProfileForm({ ...profileForm, password: e.target.value })
+              }
+              className="auth-input"
+            />
+
+            <button className="btn btn-primary" onClick={handleProfileUpdate}>
+              Profili Güncelle
             </button>
-          </div>
 
-          <div className="card">
-            <h3>Yorum Listesi</h3>
+            <div style={{ marginTop: '12px' }}>
+              <button className="btn btn-outline" onClick={handleDeleteAccount}>
+                Hesabı Sil
+              </button>
+            </div>
 
-            {comments.length === 0 ? (
-              <p className="card-desc">Henüz yorum yok.</p>
-            ) : (
-              <ul style={{ listStyle: 'none', padding: 0 }}>
-                {comments.map((comment) => (
-                  <li
-                    key={comment.id}
-                    style={{
-                      marginBottom: '14px',
-                      padding: '14px',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: '14px',
-                      background: 'rgba(255,255,255,0.03)'
-                    }}
-                  >
-                    {editingCommentId === comment.id ? (
-                      <>
-                        <input
-                          type="text"
-                          value={editedComment}
-                          onChange={(e) => setEditedComment(e.target.value)}
-                          style={{
-                            width: '100%',
-                            padding: '12px',
-                            marginBottom: '12px',
-                            borderRadius: '10px',
-                            border: '1px solid rgba(255,255,255,0.15)',
-                            background: 'rgba(255,255,255,0.06)',
-                            color: 'white',
-                            outline: 'none'
-                          }}
-                        />
+            {profileMessage && <p className="auth-message">{profileMessage}</p>}
 
-                        <button
-                          className="btn btn-primary"
-                          onClick={() => saveUpdatedComment(comment.id)}
-                        >
-                          Kaydet
-                        </button>
-
-                        <button
-                          className="btn btn-outline"
-                          onClick={cancelEditingComment}
-                          style={{ marginLeft: '10px' }}
-                        >
-                          Vazgeç
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <p style={{ marginBottom: '10px' }}>{comment.content}</p>
-
-                        <button
-                          className="btn btn-outline"
-                          onClick={() => startEditingComment(comment)}
-                        >
-                          Güncelle
-                        </button>
-
-                        <button
-                          className="btn btn-outline"
-                          onClick={() => deleteComment(comment.id)}
-                          style={{ marginLeft: '10px' }}
-                        >
-                          Sil
-                        </button>
-                      </>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
+            <div className="auth-actions-row">
+              <button className="btn btn-outline" onClick={closeProfilePanel}>
+                Kapat
+              </button>
+            </div>
           </div>
         </div>
-      </section>
+      )}
+
+      {selectedObject && (
+        <div className="auth-modal-overlay">
+          <div className="card detail-modal-card">
+            <div className="detail-header">
+              <div>
+                <span className="card-type">{selectedObject.type}</span>
+                <h2 className="detail-title">{selectedObject.name}</h2>
+              </div>
+
+              <button className="btn btn-outline" onClick={closeObjectDetail}>
+                Kapat
+              </button>
+            </div>
+
+            <p className="detail-text">{selectedObject.description}</p>
+
+            <div className="detail-info-grid">
+              <div className="detail-info-box">
+                <strong>Durum</strong>
+                <span>{selectedObject.status}</span>
+              </div>
+              <div className="detail-info-box">
+                <strong>Yörünge</strong>
+                <span>{selectedObject.orbit}</span>
+              </div>
+              <div className="detail-info-box">
+                <strong>Risk</strong>
+                <span>{selectedObject.risk}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activePage === 'home' && (
+        <>
+          <section className="hero" id="home">
+            <div className="hero-content">
+              <span className="badge">Uzay Teknolojileri • Takip Platformu</span>
+              <h1>Roket, Uydu ve Asteroidleri Tek Platformda Takip Et</h1>
+              <p>
+                Galaxy Atlas; uzay nesnelerini listeleyen, detaylarını gösteren,
+                karşılaştırma ve inceleme imkânı sunan modern bir web platformudur.
+              </p>
+
+              <div className="hero-buttons">
+                <button
+                  className="btn btn-primary"
+                  onClick={() => setActivePage('objects')}
+                >
+                  Keşfet
+                </button>
+                <button
+                  className="btn btn-outline"
+                  onClick={() => setActivePage('objects')}
+                >
+                  Detayları İncele
+                </button>
+              </div>
+
+              <div className="hero-stats">
+                <div className="stat-box">
+                  <h3>{spaceObjects.length}+</h3>
+                  <p>Uzay Nesnesi</p>
+                </div>
+                <div className="stat-box">
+                  <h3>24/7</h3>
+                  <p>Takip Sistemi</p>
+                </div>
+                <div className="stat-box">
+                  <h3>REST</h3>
+                  <p>API Destekli</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="hero-panel">
+              <div className="orbit-card">
+                <p className="mini-title">Canlı İzleme Kartı</p>
+                <h3>{spaceObjects[0]?.name || 'Hubble Telescope'}</h3>
+                <p>Tür: {spaceObjects[0]?.type || 'UYDU'}</p>
+                <p>Durum: {spaceObjects[0]?.status || 'Aktif'}</p>
+                <p>Yörünge: {spaceObjects[0]?.orbit || 'Dünya Alçak Yörünge'}</p>
+              </div>
+
+              <div className="glow-circle glow-1"></div>
+              <div className="glow-circle glow-2"></div>
+              <div className="floating-rock rock-1"></div>
+              <div className="floating-rock rock-2"></div>
+            </div>
+          </section>
+
+          <section className="features section" id="features">
+            <div className="section-header">
+              <span className="section-tag">Platform Özellikleri</span>
+              <h2>Neler Sunuyor?</h2>
+            </div>
+
+            <div className="feature-grid">
+              <div className="feature-card">
+                <h3>Listeleme</h3>
+                <p>Uydu, roket ve asteroid verilerini tek ekranda listeleme.</p>
+              </div>
+
+              <div className="feature-card">
+                <h3>Detay Görüntüleme</h3>
+                <p>Her nesne için detay paneli ve takip bilgileri.</p>
+              </div>
+
+              <div className="feature-card">
+                <h3>Filtreleme</h3>
+                <p>Nesneleri tür, durum ve risk kriterlerine göre filtreleme.</p>
+              </div>
+
+              <div className="feature-card">
+                <h3>Karşılaştırma</h3>
+                <p>İki uzay nesnesini seçip temel özelliklerini karşılaştırma.</p>
+              </div>
+            </div>
+          </section>
+
+          <section className="about section" id="about">
+            <div className="about-box">
+              <div className="about-text">
+                <span className="section-tag">Proje Hakkında</span>
+                <h2>Yazılım Mühendisliği Dersi İçin Geliştiriliyor</h2>
+                <p>
+                  Galaxy Atlas projesi; kullanıcıların uzay nesnelerini
+                  görüntüleyebildiği, REST API ile desteklenen ve veritabanı
+                  bağlantısına sahip bir takip sistemi oluşturmayı amaçlamaktadır.
+                </p>
+              </div>
+
+              <div className="about-side">
+                <div className="info-card">
+                  <h3>Teknolojiler</h3>
+                  <p>React, Spring Boot, PostgreSQL, Postman, GitHub</p>
+                </div>
+              </div>
+            </div>
+          </section>
+        </>
+      )}
+
+      {activePage === 'objects' && (
+        <section className="objects section" id="objects">
+          <div className="section-header">
+            <span className="section-tag">Uzay Nesneleri</span>
+            <h2>Tüm Nesneler</h2>
+            <p>
+              Buradan nesneleri inceleyebilir, filtreleyebilir ve
+              karşılaştırabilirsiniz.
+            </p>
+          </div>
+
+          {!loggedInUser ? (
+            <div className="card">
+              <p className="card-desc">
+                Filtreleme ve karşılaştırma özelliklerini kullanmak için giriş
+                yapın.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="card" style={{ marginBottom: '28px' }}>
+                <h3 style={{ marginBottom: '18px' }}>Filtreleme</h3>
+
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                    gap: '14px'
+                  }}
+                >
+                  <select
+                    className="auth-input"
+                    value={filterType}
+                    onChange={(e) => setFilterType(e.target.value)}
+                  >
+                    <option value="ALL">Tüm Türler</option>
+                    <option value="UYDU">UYDU</option>
+                    <option value="ROKET">ROKET</option>
+                    <option value="ASTEROID">ASTEROID</option>
+                  </select>
+
+                  <select
+                    className="auth-input"
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                  >
+                    <option value="ALL">Tüm Durumlar</option>
+                    <option value="Aktif">Aktif</option>
+                    <option value="Hazır">Hazır</option>
+                    <option value="İzleniyor">İzleniyor</option>
+                  </select>
+
+                  <select
+                    className="auth-input"
+                    value={filterRisk}
+                    onChange={(e) => setFilterRisk(e.target.value)}
+                  >
+                    <option value="ALL">Tüm Riskler</option>
+                    <option value="Düşük">Düşük</option>
+                    <option value="Orta">Orta</option>
+                    <option value="Yüksek">Yüksek</option>
+                  </select>
+
+                  <button
+                    className="btn btn-outline"
+                    onClick={() => {
+                      setFilterType('ALL')
+                      setFilterStatus('ALL')
+                      setFilterRisk('ALL')
+                    }}
+                  >
+                    Filtreleri Temizle
+                  </button>
+                </div>
+              </div>
+
+              <div className="card" style={{ marginBottom: '28px' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: '16px',
+                    flexWrap: 'wrap',
+                    marginBottom: '18px'
+                  }}
+                >
+                  <div>
+                    <h3 style={{ marginBottom: '6px' }}>Karşılaştırma Alanı</h3>
+                    <p className="card-desc" style={{ marginBottom: 0 }}>
+                      Karşılaştırmak için en fazla 2 nesne seçin.
+                    </p>
+                  </div>
+
+                  <button
+                    className="btn btn-outline"
+                    onClick={clearCompareSelection}
+                  >
+                    Seçimi Temizle
+                  </button>
+                </div>
+
+                {comparedObjects.length === 0 ? (
+                  <p className="card-desc">
+                    Henüz karşılaştırma için nesne seçilmedi.
+                  </p>
+                ) : (
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                      gap: '18px'
+                    }}
+                  >
+                    {comparedObjects.map((object) => (
+                      <div key={object.id} className="card">
+                        <span className="card-type">{object.type}</span>
+                        <h3>{object.name}</h3>
+                        <p className="card-desc">{object.description}</p>
+                        <p><strong>Durum:</strong> {object.status}</p>
+                        <p><strong>Yörünge:</strong> {object.orbit}</p>
+                        <p><strong>Risk:</strong> {object.risk}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="card-container object-grid">
+                {filteredObjects.length === 0 ? (
+                  <div className="card">
+                    <p className="card-desc">
+                      Bu filtrelere uygun nesne bulunamadı.
+                    </p>
+                  </div>
+                ) : (
+                  filteredObjects.map((object) => renderObjectCard(object))
+                )}
+              </div>
+            </>
+          )}
+        </section>
+      )}
 
       <section className="section map-section" id="map">
         <div className="section-header">
@@ -458,27 +900,6 @@ function App() {
         </div>
       </section>
 
-      <section className="about section" id="about">
-        <div className="about-box">
-          <div className="about-text">
-            <span className="section-tag">Proje Hakkında</span>
-            <h2>Yazılım Mühendisliği Dersi İçin Geliştiriliyor</h2>
-            <p>
-              Galaxy Atlas projesi; kullanıcıların uzay nesnelerini
-              görüntüleyebildiği, REST API ile desteklenen ve veritabanı
-              bağlantısına sahip bir takip sistemi oluşturmayı amaçlamaktadır.
-            </p>
-          </div>
-
-          <div className="about-side">
-            <div className="info-card">
-              <h3>Teknolojiler</h3>
-              <p>React, Spring Boot, PostgreSQL, Postman, GitHub</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <footer className="footer">
         <div>
           <h3>Galaxy Atlas</h3>
@@ -486,11 +907,19 @@ function App() {
         </div>
 
         <div className="footer-links">
-          <a href="#home">Ana Sayfa</a>
-          <a href="#objects">Nesneler</a>
+          <button
+            className="nav-link-btn footer-btn"
+            onClick={() => setActivePage('home')}
+          >
+            Ana Sayfa
+          </button>
+          <button
+            className="nav-link-btn footer-btn"
+            onClick={() => setActivePage('objects')}
+          >
+            Nesneler
+          </button>
           <a href="#features">Özellikler</a>
-          <a href="#favorites">Favoriler</a>
-          <a href="#comments">Yorumlar</a>
           <a href="#map">Harita</a>
           <a href="#about">Hakkında</a>
         </div>
