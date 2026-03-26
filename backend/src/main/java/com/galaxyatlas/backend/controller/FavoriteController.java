@@ -17,21 +17,22 @@ public class FavoriteController {
         this.favoriteRepository = favoriteRepository;
     }
 
-    // R9 - Favoriye ekleme
+    // Favori ekle
     @PostMapping
     public Favorite addFavorite(@RequestBody Favorite favorite) {
         return favoriteRepository.save(favorite);
     }
 
-    // R11 - Favori listeleme
-    @GetMapping
-    public List<Favorite> getFavorites(@RequestParam Long userId) {
+    // Kullanıcının favorilerini getir
+    @GetMapping("/{userId}")
+    public List<Favorite> getFavorites(@PathVariable Long userId) {
         return favoriteRepository.findByUserId(userId);
     }
 
-    // R10 - Favoriden çıkarma
-    @DeleteMapping("/{id}")
-    public void deleteFavorite(@PathVariable Long id) {
-        favoriteRepository.deleteById(id);
+    // Favoriden çıkar
+    @DeleteMapping
+    public void removeFavorite(@RequestParam Long userId,
+            @RequestParam Long spaceObjectId) {
+        favoriteRepository.deleteByUserIdAndSpaceObjectId(userId, spaceObjectId);
     }
 }
