@@ -10,9 +10,9 @@ public class Comment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long userId;
-
     private Long spaceObjectId;
+
+    private String username;
 
     private String content;
 
@@ -20,12 +20,12 @@ public class Comment {
         return id;
     }
 
-    public Long getUserId() {
-        return userId;
-    }
-
     public Long getSpaceObjectId() {
         return spaceObjectId;
+    }
+
+    public String getUsername() {
+        return username;
     }
 
     public String getContent() {
@@ -36,12 +36,12 @@ public class Comment {
         this.id = id;
     }
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-
     public void setSpaceObjectId(Long spaceObjectId) {
         this.spaceObjectId = spaceObjectId;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public void setContent(String content) {

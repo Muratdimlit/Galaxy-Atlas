@@ -17,19 +17,16 @@ public class CommentController {
         this.commentRepository = commentRepository;
     }
 
-    // R15 - Yorum ekleme
     @PostMapping
     public Comment addComment(@RequestBody Comment comment) {
         return commentRepository.save(comment);
     }
 
-    // Yorumları listeleme (bir nesneye göre)
-    @GetMapping
-    public List<Comment> getComments(@RequestParam Long spaceObjectId) {
+    @GetMapping("/{spaceObjectId}")
+    public List<Comment> getComments(@PathVariable Long spaceObjectId) {
         return commentRepository.findBySpaceObjectId(spaceObjectId);
     }
 
-    // R16 - Yorum güncelleme
     @PutMapping("/{id}")
     public Comment updateComment(@PathVariable Long id, @RequestBody Comment updatedComment) {
         Comment comment = commentRepository.findById(id).orElseThrow();
@@ -37,7 +34,6 @@ public class CommentController {
         return commentRepository.save(comment);
     }
 
-    // R16 - Yorum silme
     @DeleteMapping("/{id}")
     public void deleteComment(@PathVariable Long id) {
         commentRepository.deleteById(id);

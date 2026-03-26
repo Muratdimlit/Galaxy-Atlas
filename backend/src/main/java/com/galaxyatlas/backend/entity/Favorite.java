@@ -1,11 +1,12 @@
 package com.galaxyatlas.backend.entity;
+
 import jakarta.persistence.*;
 
 @Entity
 @Table(name = "favorites")
-
 public class Favorite {
-     @Id
+
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
@@ -36,5 +37,4 @@ public class Favorite {
     public void setSpaceObjectId(Long spaceObjectId) {
         this.spaceObjectId = spaceObjectId;
     }
-
 }
