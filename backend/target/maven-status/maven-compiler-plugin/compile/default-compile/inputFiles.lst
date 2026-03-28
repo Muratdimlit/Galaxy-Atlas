@@ -1,0 +1,13 @@
+/home/murat/Masaüstü/Galaxy-Atlas/backend/src/main/java/com/galaxyatlas/backend/BackendApplication.java
+/home/murat/Masaüstü/Galaxy-Atlas/backend/src/main/java/com/galaxyatlas/backend/controller/AuthController.java
+/home/murat/Masaüstü/Galaxy-Atlas/backend/src/main/java/com/galaxyatlas/backend/controller/CommentController.java
+/home/murat/Masaüstü/Galaxy-Atlas/backend/src/main/java/com/galaxyatlas/backend/controller/FavoriteController.java
+/home/murat/Masaüstü/Galaxy-Atlas/backend/src/main/java/com/galaxyatlas/backend/controller/SpaceObjectController.java
+/home/murat/Masaüstü/Galaxy-Atlas/backend/src/main/java/com/galaxyatlas/backend/entity/Comment.java
+/home/murat/Masaüstü/Galaxy-Atlas/backend/src/main/java/com/galaxyatlas/backend/entity/Favorite.java
+/home/murat/Masaüstü/Galaxy-Atlas/backend/src/main/java/com/galaxyatlas/backend/entity/SpaceObject.java
+/home/murat/Masaüstü/Galaxy-Atlas/backend/src/main/java/com/galaxyatlas/backend/entity/User.java
+/home/murat/Masaüstü/Galaxy-Atlas/backend/src/main/java/com/galaxyatlas/backend/repository/CommentRepository.java
+/home/murat/Masaüstü/Galaxy-Atlas/backend/src/main/java/com/galaxyatlas/backend/repository/FavoriteRepository.java
+/home/murat/Masaüstü/Galaxy-Atlas/backend/src/main/java/com/galaxyatlas/backend/repository/SpaceObjectRepository.java
+/home/murat/Masaüstü/Galaxy-Atlas/backend/src/main/java/com/galaxyatlas/backend/repository/UserRepository.java
