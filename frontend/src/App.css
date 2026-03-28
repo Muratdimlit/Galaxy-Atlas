@@ -533,6 +533,11 @@ button {
   color: #a9cfff;
 }
 
+.card-footer a {
+  color: #7fc2ff;
+  font-weight: 600;
+}
+
 .feature-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -725,6 +730,16 @@ button {
 
 .detail-comment-form {
   margin-bottom: 20px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.detail-comment-form .auth-input {
+  flex: 1;
+  margin-bottom: 0;
+  min-width: 220px;
 }
 
 .detail-comment-item {
@@ -943,6 +958,11 @@ button {
 
   .detail-title {
     font-size: 28px;
+  }
+
+  .detail-comment-form {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 
