@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import './App.css'
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
+import 'leaflet/dist/leaflet.css'
 
 function App() {
   const fallbackObjects = [
@@ -45,6 +47,7 @@ function App() {
   const [authMode, setAuthMode] = useState('login')
   const [authMessage, setAuthMessage] = useState('')
   const [loggedInUser, setLoggedInUser] = useState(null)
+  const [issPosition, setIssPosition] = useState(null)
 
   const [showProfilePanel, setShowProfilePanel] = useState(false)
   const [profileForm, setProfileForm] = useState({
@@ -191,6 +194,23 @@ function App() {
       setComments([])
     }
   }, [selectedObject])
+
+  useEffect(() => {
+    const fetchISS = () => {
+      fetch("http://localhost:8080/iss")
+        .then(res => res.json())
+        .then(data => {
+          const lat = parseFloat(data.iss_position.latitude)
+          const lon = parseFloat(data.iss_position.longitude)
+          setIssPosition([lat, lon])
+        })
+    }
+
+    fetchISS()
+    const interval = setInterval(fetchISS, 5000)
+
+    return () => clearInterval(interval)
+  }, [])
 
   const getFavoriteRecordByObjectId = (spaceObjectId) =>
     favoriteRecords.find((fav) => fav.spaceObjectId === spaceObjectId)
@@ -1222,20 +1242,51 @@ function App() {
 
       <section className="section map-section" id="map">
         <div className="section-header">
-          <span className="section-tag">Yakında</span>
-          <h2>Dünya Haritası ve Nesne Konumları</h2>
-          <p>
-            İlerleyen adımlarda uzay nesnelerinin konumlarını dünya üzerinde
-            göstereceğimiz alan burada yer alacak.
-          </p>
+          <span className="section-tag">Canlı Harita</span>
+          <h2>ISS Konumu</h2>
+          <p>Uluslararası Uzay İstasyonu anlık olarak haritada gösterilmektedir.</p>
         </div>
 
-        <div className="map-placeholder">
-          <div className="map-grid"></div>
-          <div className="map-pin pin-1"></div>
-          <div className="map-pin pin-2"></div>
-          <div className="map-pin pin-3"></div>
-          <div className="map-center-text">Harita alanı burada gösterilecek</div>
+        <div style={{ height: '350px', borderRadius: '20px', overflow: 'hidden' }}>
+          <MapContainer
+            center={[0, 0]}
+            zoom={2}
+            style={{ height: '100%', width: '100%' }}
+          >
+            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+
+            {issPosition && (
+              <Marker position={issPosition}>
+                <Popup>
+                  <div>
+                    <strong>ISS</strong>
+                    <br />
+                    Uluslararası Uzay İstasyonu
+                    <br />
+                    Enlem: {issPosition[0].toFixed(4)}
+                    <br />
+                    Boylam: {issPosition[1].toFixed(4)}
+                  </div>
+                </Popup>
+              </Marker>
+            )}
+          </MapContainer>
+
+
+          {issPosition && (
+            <div
+              className="card"
+              style={{ marginTop: '20px', textAlign: 'left' }}
+            >
+              <h3>Canlı ISS Verisi</h3>
+              <p><strong>Enlem:</strong> {issPosition[0].toFixed(4)}</p>
+              <p><strong>Boylam:</strong> {issPosition[1].toFixed(4)}</p>
+              <p><strong>Kaynak:</strong> Backend / ISS API</p>
+              <p className="card-desc">
+                Bu veri 5 saniyede bir güncellenmektedir.
+              </p>
+            </div>
+          )}
         </div>
       </section>
 

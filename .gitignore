@@ -1,3 +1,7 @@
 .vscode/
 target/
 *.class
+node_modules/
+.env
+.idea/
+.vscode/
