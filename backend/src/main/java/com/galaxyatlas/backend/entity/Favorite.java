@@ -11,8 +11,10 @@ public class Favorite {
     private Long id;
 
     private Long userId;
-
     private Long spaceObjectId;
+
+    public Favorite() {
+    }
 
     public Long getId() {
         return id;

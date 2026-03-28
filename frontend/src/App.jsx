@@ -32,6 +32,8 @@ function App() {
     }
   ]
 
+  const TEST_USER_ID = 1
+
   const [spaceObjects, setSpaceObjects] = useState(fallbackObjects)
   const [favorites, setFavorites] = useState([])
   const [comments, setComments] = useState([])
@@ -41,11 +43,7 @@ function App() {
   const [editedComment, setEditedComment] = useState('')
 
   const [activePage, setActivePage] = useState('home')
-  const [selectedObject, setSelectedObject] = useState(null)
-
-  // Test kullanıcı - Berra gereksinimleri için sabit
-  const testUserId = 1
-  const testUsername = 'Berra'
+  const [selectedCommentObject, setSelectedCommentObject] = useState(null)
 
   const loadSpaceObjects = () => {
     fetch('http://localhost:8080/space-objects')
@@ -69,18 +67,25 @@ function App() {
           setSpaceObjects(fallbackObjects)
         }
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error('Nesne listeleme hatası:', err)
         setSpaceObjects(fallbackObjects)
       })
   }
 
   const loadFavorites = () => {
-    fetch(`http://localhost:8080/favorites/${testUserId}`)
-      .then((res) => res.json())
+    fetch(`http://localhost:8080/favorites/${TEST_USER_ID}`)
+      .then((res) => {
+        if (!res.ok) throw new Error('Favoriler alınamadı')
+        return res.json()
+      })
       .then((data) => {
         setFavorites(Array.isArray(data) ? data : [])
       })
-      .catch((err) => console.error('Favori listeleme hatası:', err))
+      .catch((err) => {
+        console.error('Favori listeleme hatası:', err)
+        setFavorites([])
+      })
   }
 
   const loadComments = (spaceObjectId) => {
@@ -90,11 +95,17 @@ function App() {
     }
 
     fetch(`http://localhost:8080/comments/${spaceObjectId}`)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error('Yorumlar alınamadı')
+        return res.json()
+      })
       .then((data) => {
         setComments(Array.isArray(data) ? data : [])
       })
-      .catch((err) => console.error('Yorum listeleme hatası:', err))
+      .catch((err) => {
+        console.error('Yorum listeleme hatası:', err)
+        setComments([])
+      })
   }
 
   useEffect(() => {
@@ -102,96 +113,81 @@ function App() {
     loadFavorites()
   }, [])
 
-  useEffect(() => {
-    if (selectedObject) {
-      loadComments(selectedObject.id)
-    } else {
-      setComments([])
-    }
-  }, [selectedObject])
+  const favoriteObjectIds = useMemo(() => {
+    return favorites.map((fav) => fav.spaceObjectId)
+  }, [favorites])
 
-  const favoriteObjectIds = useMemo(
-    () => favorites.map((fav) => fav.spaceObjectId),
-    [favorites]
-  )
+  const favoriteObjects = useMemo(() => {
+    return spaceObjects.filter((object) => favoriteObjectIds.includes(object.id))
+  }, [spaceObjects, favoriteObjectIds])
 
-  const favoriteObjects = useMemo(
-    () => spaceObjects.filter((object) => favoriteObjectIds.includes(object.id)),
-    [spaceObjects, favoriteObjectIds]
-  )
+  const toggleFavorite = async (spaceObjectId) => {
+    const isFavorite = favoriteObjectIds.includes(spaceObjectId)
 
-  const isFavorite = (spaceObjectId) => favoriteObjectIds.includes(spaceObjectId)
-
-  const addFavorite = (spaceObjectId) => {
-    fetch('http://localhost:8080/favorites', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        userId: testUserId,
-        spaceObjectId
-      })
-    })
-      .then((res) => res.json())
-      .then(() => loadFavorites())
-      .catch((err) => console.error('Favori ekleme hatası:', err))
-  }
-
-  const removeFavorite = (spaceObjectId) => {
-    fetch(
-      `http://localhost:8080/favorites?userId=${testUserId}&spaceObjectId=${spaceObjectId}`,
-      {
-        method: 'DELETE'
+    try {
+      if (isFavorite) {
+        await fetch(
+          `http://localhost:8080/favorites?userId=${TEST_USER_ID}&spaceObjectId=${spaceObjectId}`,
+          {
+            method: 'DELETE'
+          }
+        )
+      } else {
+        await fetch('http://localhost:8080/favorites', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            userId: TEST_USER_ID,
+            spaceObjectId
+          })
+        })
       }
-    )
-      .then(() => loadFavorites())
-      .catch((err) => console.error('Favori silme hatası:', err))
-  }
 
-  const toggleFavorite = (spaceObjectId) => {
-    if (isFavorite(spaceObjectId)) {
-      removeFavorite(spaceObjectId)
-    } else {
-      addFavorite(spaceObjectId)
+      await loadFavorites()
+    } catch (error) {
+      console.error('Favori işlemi hatası:', error)
     }
   }
 
-  const openObjectDetail = (object) => {
-    setSelectedObject(object)
+  const openCommentsPanel = (object) => {
+    setSelectedCommentObject(object)
     setNewComment('')
     setEditingCommentId(null)
     setEditedComment('')
+    loadComments(object.id)
   }
 
-  const closeObjectDetail = () => {
-    setSelectedObject(null)
+  const closeCommentsPanel = () => {
+    setSelectedCommentObject(null)
     setComments([])
     setNewComment('')
     setEditingCommentId(null)
     setEditedComment('')
   }
 
-  const addComment = () => {
-    if (!newComment.trim() || !selectedObject) return
+  const addComment = async () => {
+    if (!selectedCommentObject || !newComment.trim()) return
 
-    fetch('http://localhost:8080/comments', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        spaceObjectId: selectedObject.id,
-        username: testUsername,
-        content: newComment
+    try {
+      await fetch('http://localhost:8080/comments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          userId: TEST_USER_ID,
+          spaceObjectId: selectedCommentObject.id,
+          content: newComment
+        })
       })
-    })
-      .then((res) => res.json())
-      .then(() => {
-        setNewComment('')
-        loadComments(selectedObject.id)
-      })
-      .catch((err) => console.error('Yorum ekleme hatası:', err))
+
+      setNewComment('')
+      loadComments(selectedCommentObject.id)
+    } catch (error) {
+      console.error('Yorum ekleme hatası:', error)
+    }
   }
 
   const startEditingComment = (comment) => {
@@ -204,63 +200,81 @@ function App() {
     setEditedComment('')
   }
 
-  const saveUpdatedComment = (id) => {
-    if (!editedComment.trim()) return
+  const saveUpdatedComment = async (commentId) => {
+    if (!editedComment.trim() || !selectedCommentObject) return
 
-    fetch(`http://localhost:8080/comments/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        content: editedComment
+    try {
+      await fetch(`http://localhost:8080/comments/${commentId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          content: editedComment
+        })
       })
-    })
-      .then((res) => res.json())
-      .then(() => {
-        setEditingCommentId(null)
-        setEditedComment('')
-        if (selectedObject) {
-          loadComments(selectedObject.id)
-        }
-      })
-      .catch((err) => console.error('Yorum güncelleme hatası:', err))
+
+      setEditingCommentId(null)
+      setEditedComment('')
+      loadComments(selectedCommentObject.id)
+    } catch (error) {
+      console.error('Yorum güncelleme hatası:', error)
+    }
   }
 
-  const deleteComment = (id) => {
-    fetch(`http://localhost:8080/comments/${id}`, {
-      method: 'DELETE'
-    })
-      .then(() => {
-        if (selectedObject) {
-          loadComments(selectedObject.id)
-        }
+  const deleteComment = async (commentId) => {
+    if (!selectedCommentObject) return
+
+    try {
+      await fetch(`http://localhost:8080/comments/${commentId}`, {
+        method: 'DELETE'
       })
-      .catch((err) => console.error('Yorum silme hatası:', err))
+
+      loadComments(selectedCommentObject.id)
+    } catch (error) {
+      console.error('Yorum silme hatası:', error)
+    }
   }
 
-  const renderObjectCard = (object) => (
-    <div className="card object-card" key={object.id}>
-      <button
-        className={`favorite-star ${isFavorite(object.id) ? 'active' : ''}`}
-        onClick={() => toggleFavorite(object.id)}
-        title="Favoriye ekle / çıkar"
-      >
-        ★
-      </button>
+  const renderObjectCard = (object) => {
+    const isFavorite = favoriteObjectIds.includes(object.id)
 
-      <span className="card-type">{object.type}</span>
-      <h3>{object.name}</h3>
-      <p className="card-desc">{object.description}</p>
+    return (
+      <div className="card object-card" key={object.id}>
+        <span className="card-type">{object.type}</span>
+        <h3>{object.name}</h3>
+        <p className="card-desc">{object.description}</p>
 
-      <div className="card-footer">
-        <span>Durum: {object.status}</span>
-        <button className="btn btn-outline" onClick={() => openObjectDetail(object)}>
-          Detay
-        </button>
+        <div
+          style={{
+            display: 'flex',
+            gap: '10px',
+            marginBottom: '14px',
+            flexWrap: 'wrap'
+          }}
+        >
+          <button
+            type="button"
+            className={`btn ${isFavorite ? 'btn-primary' : 'btn-outline'}`}
+            onClick={() => toggleFavorite(object.id)}
+          >
+            {isFavorite ? 'Favoriden Çıkar' : 'Favoriye Ekle'}
+          </button>
+        </div>
+
+        <div className="card-footer">
+          <span>Durum: {object.status}</span>
+          <button
+            type="button"
+            className="btn btn-outline"
+            onClick={() => openCommentsPanel(object)}
+          >
+            Yorumlar
+          </button>
+        </div>
       </div>
-    </div>
-  )
+    )
+  }
 
   return (
     <div className="app">
@@ -294,54 +308,136 @@ function App() {
         </nav>
 
         <div className="nav-actions">
-          <button className="btn btn-outline">Test Kullanıcı: Berra</button>
+          <button className="btn btn-outline">Test Kullanıcı: 1</button>
         </div>
       </header>
 
-      {selectedObject && (
-        <div className="auth-modal-overlay">
-          <div className="card detail-modal-card">
-            <div className="detail-header">
-              <div>
-                <span className="card-type">{selectedObject.type}</span>
-                <h2 className="detail-title">{selectedObject.name}</h2>
+      {activePage === 'home' && (
+        <>
+          <section className="hero" id="home">
+            <div className="hero-content">
+              <span className="badge">Uzay Teknolojileri • Takip Platformu</span>
+              <h1>Roket, Uydu ve Asteroidleri Tek Platformda Takip Et</h1>
+              <p>
+                Galaxy Atlas; uzay nesnelerini listeleyen, favorilere ekleyen ve
+                yorum yönetimi yapılabilen modern bir web platformudur.
+              </p>
+
+              <div className="hero-buttons">
+                <button className="btn btn-primary" onClick={() => setActivePage('objects')}>
+                  Keşfet
+                </button>
+                <button className="btn btn-outline" onClick={() => setActivePage('favorites')}>
+                  Favorileri Gör
+                </button>
               </div>
 
-              <button className="btn btn-outline" onClick={closeObjectDetail}>
-                Kapat
-              </button>
+              <div className="hero-stats">
+                <div className="stat-box">
+                  <h3>{spaceObjects.length}+</h3>
+                  <p>Uzay Nesnesi</p>
+                </div>
+                <div className="stat-box">
+                  <h3>{favorites.length}</h3>
+                  <p>Favori</p>
+                </div>
+                <div className="stat-box">
+                  <h3>REST</h3>
+                  <p>API Destekli</p>
+                </div>
+              </div>
             </div>
 
-            <p className="detail-text">{selectedObject.description}</p>
+            <div className="hero-panel">
+              <div className="orbit-card">
+                <p className="mini-title">Canlı İzleme Kartı</p>
+                <h3>{spaceObjects[0]?.name || 'Hubble Telescope'}</h3>
+                <p>Tür: {spaceObjects[0]?.type || 'UYDU'}</p>
+                <p>Durum: {spaceObjects[0]?.status || 'Aktif'}</p>
+                <p>Yörünge: {spaceObjects[0]?.orbit || 'Dünya Alçak Yörünge'}</p>
+              </div>
 
-            <div className="detail-info-grid">
-              <div className="detail-info-box">
-                <strong>Durum</strong>
-                <span>{selectedObject.status}</span>
+              <div className="glow-circle glow-1"></div>
+              <div className="glow-circle glow-2"></div>
+              <div className="floating-rock rock-1"></div>
+              <div className="floating-rock rock-2"></div>
+            </div>
+          </section>
+
+          <section className="about section" id="about">
+            <div className="about-box">
+              <div className="about-text">
+                <span className="section-tag">Proje Hakkında</span>
+                <h2>Yazılım Mühendisliği Dersi İçin Geliştiriliyor</h2>
+                <p>
+                  Bu sürümde kullanıcı bir uzay nesnesini favorilere ekleyebilir,
+                  favoriler listesini görebilir ve yorumları ayrı panelden
+                  yönetebilir.
+                </p>
               </div>
-              <div className="detail-info-box">
-                <strong>Yörünge</strong>
-                <span>{selectedObject.orbit}</span>
-              </div>
-              <div className="detail-info-box">
-                <strong>Risk</strong>
-                <span>{selectedObject.risk}</span>
+
+              <div className="about-side">
+                <div className="info-card">
+                  <h3>Teknolojiler</h3>
+                  <p>React, Spring Boot, PostgreSQL, Postman, GitHub</p>
+                </div>
               </div>
             </div>
+          </section>
+        </>
+      )}
 
-            <div className="detail-comments-section">
-              <h3>Yorumlar</h3>
+      {activePage === 'objects' && (
+        <section className="objects section" id="objects">
+          <div className="section-header">
+            <span className="section-tag">Uzay Nesneleri</span>
+            <h2>Tüm Nesneler</h2>
+            <p>
+              Buradan nesneleri inceleyebilir, favoriye ekleyebilir ve yorum
+              panelini açabilirsiniz.
+            </p>
+          </div>
+
+          <div className="card-container object-grid">
+            {spaceObjects.map((object) => renderObjectCard(object))}
+          </div>
+
+          {selectedCommentObject && (
+            <div className="card" style={{ marginTop: '30px' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: '16px',
+                  flexWrap: 'wrap',
+                  marginBottom: '18px'
+                }}
+              >
+                <div>
+                  <h3 style={{ marginBottom: '6px' }}>
+                    {selectedCommentObject.name} - Yorumlar
+                  </h3>
+                  <p className="card-desc" style={{ marginBottom: 0 }}>
+                    Bu nesneye ait yorumları buradan yönetebilirsiniz.
+                  </p>
+                </div>
+
+                <button className="btn btn-outline" onClick={closeCommentsPanel}>
+                  Kapat
+                </button>
+              </div>
 
               <div className="detail-comment-form">
                 <input
                   type="text"
-                  placeholder="Bu nesne hakkında yorum yaz..."
+                  placeholder="Yorum yaz..."
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   className="auth-input"
                 />
                 <button className="btn btn-primary" onClick={addComment}>
-                  Yorum Ekle
+                  Ekle
                 </button>
               </div>
 
@@ -377,16 +473,9 @@ function App() {
                         </>
                       ) : (
                         <>
-                          <p
-                            style={{
-                              marginBottom: '6px',
-                              fontWeight: 'bold',
-                              color: '#8ecbff'
-                            }}
-                          >
-                            {comment.username || 'Kullanıcı'}
+                          <p style={{ marginBottom: '10px', color: '#eaf4ff' }}>
+                            {comment.content}
                           </p>
-                          <p style={{ marginBottom: '10px' }}>{comment.content}</p>
 
                           <div className="detail-comment-actions">
                             <button
@@ -409,129 +498,7 @@ function App() {
                 </ul>
               )}
             </div>
-          </div>
-        </div>
-      )}
-
-      {activePage === 'home' && (
-        <>
-          <section className="hero" id="home">
-            <div className="hero-content">
-              <span className="badge">Uzay Teknolojileri • Takip Platformu</span>
-              <h1>Roket, Uydu ve Asteroidleri Tek Platformda Takip Et</h1>
-              <p>
-                Galaxy Atlas; uzay nesnelerini listeleyen, detaylarını gösteren,
-                favorilere ekleme ve yorum yapma imkânı sunan modern bir web
-                platformudur.
-              </p>
-
-              <div className="hero-buttons">
-                <button className="btn btn-primary" onClick={() => setActivePage('objects')}>
-                  Keşfet
-                </button>
-                <button className="btn btn-outline" onClick={() => setActivePage('favorites')}>
-                  Favorileri Gör
-                </button>
-              </div>
-
-              <div className="hero-stats">
-                <div className="stat-box">
-                  <h3>{spaceObjects.length}+</h3>
-                  <p>Uzay Nesnesi</p>
-                </div>
-                <div className="stat-box">
-                  <h3>{favoriteObjects.length}</h3>
-                  <p>Favori Nesne</p>
-                </div>
-                <div className="stat-box">
-                  <h3>REST</h3>
-                  <p>API Destekli</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="hero-panel">
-              <div className="orbit-card">
-                <p className="mini-title">Canlı İzleme Kartı</p>
-                <h3>{spaceObjects[0]?.name || 'Hubble Telescope'}</h3>
-                <p>Tür: {spaceObjects[0]?.type || 'UYDU'}</p>
-                <p>Durum: {spaceObjects[0]?.status || 'Aktif'}</p>
-                <p>Yörünge: {spaceObjects[0]?.orbit || 'Dünya Alçak Yörünge'}</p>
-              </div>
-
-              <div className="glow-circle glow-1"></div>
-              <div className="glow-circle glow-2"></div>
-              <div className="floating-rock rock-1"></div>
-              <div className="floating-rock rock-2"></div>
-            </div>
-          </section>
-
-          <section className="features section" id="features">
-            <div className="section-header">
-              <span className="section-tag">Platform Özellikleri</span>
-              <h2>Neler Sunuyor?</h2>
-            </div>
-
-            <div className="feature-grid">
-              <div className="feature-card">
-                <h3>Favoriler</h3>
-                <p>Uzay nesnelerini favorilere ekleme ve çıkarma.</p>
-              </div>
-
-              <div className="feature-card">
-                <h3>Yorum Sistemi</h3>
-                <p>Her nesne için yorum ekleme, güncelleme ve silme.</p>
-              </div>
-
-              <div className="feature-card">
-                <h3>Detay Görüntüleme</h3>
-                <p>Nesne detaylarını modal ekranda inceleme.</p>
-              </div>
-
-              <div className="feature-card">
-                <h3>Harita Alanı</h3>
-                <p>Nesnelerin konumları için harita gösterim alanı.</p>
-              </div>
-            </div>
-          </section>
-
-          <section className="about section" id="about">
-            <div className="about-box">
-              <div className="about-text">
-                <span className="section-tag">Proje Hakkında</span>
-                <h2>Berra Gereksinimleri İçin Hazırlanan Arayüz</h2>
-                <p>
-                  Bu sürüm; favori işlemleri, yorum sistemi ve harita alanı gibi
-                  kullanıcı etkileşimi odaklı gereksinimleri gerçekleştirmek için
-                  hazırlanmıştır.
-                </p>
-              </div>
-
-              <div className="about-side">
-                <div className="info-card">
-                  <h3>Teknolojiler</h3>
-                  <p>React, Spring Boot, PostgreSQL, GitHub</p>
-                </div>
-              </div>
-            </div>
-          </section>
-        </>
-      )}
-
-      {activePage === 'objects' && (
-        <section className="objects section" id="objects">
-          <div className="section-header">
-            <span className="section-tag">Uzay Nesneleri</span>
-            <h2>Tüm Nesneler</h2>
-            <p>
-              Buradan nesneleri inceleyebilir, favorilere ekleyebilir ve detay
-              ekranında yorum yapabilirsiniz.
-            </p>
-          </div>
-
-          <div className="card-container object-grid">
-            {spaceObjects.map((object) => renderObjectCard(object))}
-          </div>
+          )}
         </section>
       )}
 
@@ -540,7 +507,7 @@ function App() {
           <div className="section-header">
             <span className="section-tag">Favoriler</span>
             <h2>Favori Nesnelerim</h2>
-            <p>Yıldız ikonuna bastığınız nesneler burada kart olarak görünür.</p>
+            <p>Favoriye eklediğiniz uzay nesneleri burada listelenir.</p>
           </div>
 
           {favoriteObjects.length === 0 ? (
@@ -557,11 +524,11 @@ function App() {
 
       <section className="section map-section" id="map">
         <div className="section-header">
-          <span className="section-tag">Harita</span>
+          <span className="section-tag">Yakında</span>
           <h2>Dünya Haritası ve Nesne Konumları</h2>
           <p>
-            Asteroid, uydu ve roketlerin konumlarının ilerleyen aşamalarda dünya
-            haritası üzerinde gösterileceği alan.
+            İlerleyen adımlarda uzay nesnelerinin konumlarını dünya üzerinde
+            göstereceğimiz alan burada yer alacak.
           </p>
         </div>
 
@@ -570,9 +537,7 @@ function App() {
           <div className="map-pin pin-1"></div>
           <div className="map-pin pin-2"></div>
           <div className="map-pin pin-3"></div>
-          <div className="map-center-text">
-            Harita alanı burada gösterilecek
-          </div>
+          <div className="map-center-text">Harita alanı burada gösterilecek</div>
         </div>
       </section>
 

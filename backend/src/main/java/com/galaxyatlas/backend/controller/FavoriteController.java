@@ -11,28 +11,33 @@ import java.util.List;
 @CrossOrigin
 public class FavoriteController {
 
-    private final FavoriteRepository favoriteRepository;
+    private final FavoriteRepository repository;
 
-    public FavoriteController(FavoriteRepository favoriteRepository) {
-        this.favoriteRepository = favoriteRepository;
+    public FavoriteController(FavoriteRepository repository) {
+        this.repository = repository;
     }
 
-    // Favori ekle
     @PostMapping
-    public Favorite addFavorite(@RequestBody Favorite favorite) {
-        return favoriteRepository.save(favorite);
+    public Favorite add(@RequestBody Favorite favorite) {
+        List<Favorite> existing = repository.findAllByUserIdAndSpaceObjectId(
+                favorite.getUserId(),
+                favorite.getSpaceObjectId());
+
+        if (!existing.isEmpty()) {
+            return existing.get(0);
+        }
+
+        return repository.save(favorite);
     }
 
-    // Kullanıcının favorilerini getir
     @GetMapping("/{userId}")
-    public List<Favorite> getFavorites(@PathVariable Long userId) {
-        return favoriteRepository.findByUserId(userId);
+    public List<Favorite> getByUser(@PathVariable Long userId) {
+        return repository.findByUserId(userId);
     }
 
-    // Favoriden çıkar
     @DeleteMapping
-    public void removeFavorite(@RequestParam Long userId,
-            @RequestParam Long spaceObjectId) {
-        favoriteRepository.deleteByUserIdAndSpaceObjectId(userId, spaceObjectId);
+    public void remove(@RequestParam Long userId, @RequestParam Long spaceObjectId) {
+        List<Favorite> favorites = repository.findAllByUserIdAndSpaceObjectId(userId, spaceObjectId);
+        repository.deleteAll(favorites);
     }
 }

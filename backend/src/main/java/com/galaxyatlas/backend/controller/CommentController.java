@@ -11,31 +11,33 @@ import java.util.List;
 @CrossOrigin
 public class CommentController {
 
-    private final CommentRepository commentRepository;
+    private final CommentRepository repository;
 
-    public CommentController(CommentRepository commentRepository) {
-        this.commentRepository = commentRepository;
+    public CommentController(CommentRepository repository) {
+        this.repository = repository;
     }
 
     @PostMapping
     public Comment addComment(@RequestBody Comment comment) {
-        return commentRepository.save(comment);
+        return repository.save(comment);
     }
 
     @GetMapping("/{spaceObjectId}")
     public List<Comment> getComments(@PathVariable Long spaceObjectId) {
-        return commentRepository.findBySpaceObjectId(spaceObjectId);
+        return repository.findBySpaceObjectId(spaceObjectId);
     }
 
     @PutMapping("/{id}")
-    public Comment updateComment(@PathVariable Long id, @RequestBody Comment updatedComment) {
-        Comment comment = commentRepository.findById(id).orElseThrow();
-        comment.setContent(updatedComment.getContent());
-        return commentRepository.save(comment);
+    public Comment update(@PathVariable Long id, @RequestBody Comment updated) {
+        Comment comment = repository.findById(id).orElseThrow();
+
+        comment.setContent(updated.getContent());
+
+        return repository.save(comment);
     }
 
     @DeleteMapping("/{id}")
-    public void deleteComment(@PathVariable Long id) {
-        commentRepository.deleteById(id);
+    public void delete(@PathVariable Long id) {
+        repository.deleteById(id);
     }
 }
