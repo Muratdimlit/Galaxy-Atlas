@@ -136,13 +136,15 @@ function App() {
       return
     }
 
-    fetch(`http://localhost:8080/favorites?userId=${userId}`)
-      .then((res) => res.json())
+    fetch(`http://localhost:8080/favorites/${userId}`)
+      .then((res) => {
+        if (!res.ok) throw new Error('Favoriler alınamadı')
+        return res.json()
+      })
       .then((data) => {
-        setFavoriteRecords(Array.isArray(data) ? data : [])
-        setFavoriteIds(
-          Array.isArray(data) ? data.map((fav) => fav.spaceObjectId) : []
-        )
+        const safeData = Array.isArray(data) ? data : []
+        setFavoriteRecords(safeData)
+        setFavoriteIds(safeData.map((fav) => fav.spaceObjectId))
       })
       .catch((err) => console.error('Favori listeleme hatası:', err))
   }
@@ -153,8 +155,11 @@ function App() {
       return
     }
 
-    fetch(`http://localhost:8080/comments?spaceObjectId=${spaceObjectId}`)
-      .then((res) => res.json())
+    fetch(`http://localhost:8080/comments/${spaceObjectId}`)
+      .then((res) => {
+        if (!res.ok) throw new Error('Yorumlar alınamadı')
+        return res.json()
+      })
       .then((data) => {
         setComments(Array.isArray(data) ? data : [])
       })
@@ -219,9 +224,12 @@ function App() {
     const existingFavorite = getFavoriteRecordByObjectId(spaceObjectId)
 
     if (existingFavorite) {
-      fetch(`http://localhost:8080/favorites/${existingFavorite.id}`, {
-        method: 'DELETE'
-      })
+      fetch(
+        `http://localhost:8080/favorites?userId=${loggedInUser.id}&spaceObjectId=${spaceObjectId}`,
+        {
+          method: 'DELETE'
+        }
+      )
         .then(() => loadFavorites(loggedInUser.id))
         .catch((err) => console.error('Favori silme hatası:', err))
       return
@@ -305,11 +313,15 @@ function App() {
       },
       body: JSON.stringify({
         userId: loggedInUser.id,
+        userName: loggedInUser.name,
         spaceObjectId: selectedObject.id,
         content: newComment
       })
     })
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error('Yorum eklenemedi')
+        return res.json()
+      })
       .then(() => {
         setNewComment('')
         loadComments(selectedObject.id)
@@ -361,15 +373,12 @@ function App() {
   const deleteComment = (id) => {
     if (!loggedInUser) return
 
-    fetch(`http://localhost:8080/comments/${id}?userId=${loggedInUser.id}`, {
+    fetch(`http://localhost:8080/comments/${id}`, {
       method: 'DELETE'
     })
-      .then(async (res) => {
-        const data = await res.json().catch(() => ({}))
-        if (!res.ok) {
-          throw new Error(data.message || 'Yorum silinemedi')
-        }
-        return data
+      .then((res) => {
+        if (!res.ok) throw new Error('Yorum silinemedi')
+        return Promise.resolve()
       })
       .then(() => {
         if (selectedObject) {
@@ -555,9 +564,8 @@ function App() {
         {loggedInUser && (
           <div style={{ marginBottom: '14px' }}>
             <button
-              className={`btn ${
-                isSelectedForCompare ? 'btn-primary' : 'btn-outline'
-              }`}
+              className={`btn ${isSelectedForCompare ? 'btn-primary' : 'btn-outline'
+                }`}
               onClick={() => toggleCompareSelection(object.id)}
             >
               {isSelectedForCompare ? 'Seçildi' : 'Karşılaştır'}
@@ -596,10 +604,7 @@ function App() {
         <div className="logo">Galaxy Atlas</div>
 
         <nav className="nav-links">
-          <button
-            className="nav-link-btn"
-            onClick={() => setActivePage('home')}
-          >
+          <button className="nav-link-btn" onClick={() => setActivePage('home')}>
             Ana Sayfa
           </button>
           <button
@@ -672,7 +677,6 @@ function App() {
                   }
                   className="auth-input"
                 />
-
                 <input
                   type="email"
                   placeholder="Email"
@@ -682,7 +686,6 @@ function App() {
                   }
                   className="auth-input"
                 />
-
                 <input
                   type="password"
                   placeholder="Şifre"
@@ -695,7 +698,6 @@ function App() {
                   }
                   className="auth-input"
                 />
-
                 <button className="btn btn-primary" onClick={handleRegister}>
                   Kayıt Ol
                 </button>
@@ -711,7 +713,6 @@ function App() {
                   }
                   className="auth-input"
                 />
-
                 <input
                   type="password"
                   placeholder="Şifre"
@@ -721,7 +722,6 @@ function App() {
                   }
                   className="auth-input"
                 />
-
                 <button className="btn btn-primary" onClick={handleLogin}>
                   Giriş Yap
                 </button>
@@ -775,7 +775,6 @@ function App() {
               }
               className="auth-input"
             />
-
             <input
               type="email"
               placeholder="Email"
@@ -785,7 +784,6 @@ function App() {
               }
               className="auth-input"
             />
-
             <input
               type="password"
               placeholder="Şifre"
@@ -882,7 +880,6 @@ function App() {
                             onChange={(e) => setEditedComment(e.target.value)}
                             className="auth-input"
                           />
-
                           <div className="detail-comment-actions">
                             <button
                               className="btn btn-primary"
@@ -987,10 +984,7 @@ function App() {
                 <h3>{spaceObjects[0]?.name || 'Hubble Telescope'}</h3>
                 <p>Tür: {spaceObjects[0]?.type || 'UYDU'}</p>
                 <p>Durum: {spaceObjects[0]?.status || 'Aktif'}</p>
-                <p>
-                  Yörünge:{' '}
-                  {spaceObjects[0]?.orbit || 'Dünya Alçak Yörünge'}
-                </p>
+                <p>Yörünge: {spaceObjects[0]?.orbit || 'Dünya Alçak Yörünge'}</p>
               </div>
 
               <div className="glow-circle glow-1"></div>
@@ -1011,17 +1005,14 @@ function App() {
                 <h3>Listeleme</h3>
                 <p>Uydu, roket ve asteroid verilerini tek ekranda listeleme.</p>
               </div>
-
               <div className="feature-card">
                 <h3>Detay Görüntüleme</h3>
                 <p>Her nesne için detay paneli, yorumlar ve takip bilgileri.</p>
               </div>
-
               <div className="feature-card">
                 <h3>Favoriler</h3>
                 <p>Nesneleri yıldız ile favorilere ekleme ve kişisel listeleme.</p>
               </div>
-
               <div className="feature-card">
                 <h3>REST API</h3>
                 <p>Backend servisleri ile veri akışını sağlayan modern yapı.</p>
@@ -1066,8 +1057,7 @@ function App() {
           {!loggedInUser ? (
             <div className="card">
               <p className="card-desc">
-                Filtreleme ve karşılaştırma özelliklerini kullanmak için giriş
-                yapın.
+                Filtreleme ve karşılaştırma özelliklerini kullanmak için giriş yapın.
               </p>
             </div>
           ) : (
@@ -1162,8 +1152,7 @@ function App() {
                   <div
                     style={{
                       display: 'grid',
-                      gridTemplateColumns:
-                        'repeat(auto-fit, minmax(260px, 1fr))',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
                       gap: '18px'
                     }}
                   >
@@ -1246,9 +1235,7 @@ function App() {
           <div className="map-pin pin-1"></div>
           <div className="map-pin pin-2"></div>
           <div className="map-pin pin-3"></div>
-          <div className="map-center-text">
-            Harita alanı burada gösterilecek
-          </div>
+          <div className="map-center-text">Harita alanı burada gösterilecek</div>
         </div>
       </section>
 
