@@ -1,9 +1,47 @@
 import { useEffect, useMemo, useState } from 'react'
 import './App.css'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
+import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
 function App() {
+
+  const issIcon = L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  })
+
+  const asteroidIcon = L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-violet.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  })
+
+  const dangerousAsteroidIcon = L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  })
+
+  const satelliteIcon = L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  })
+
   const fallbackObjects = [
     {
       id: 1,
@@ -48,6 +86,11 @@ function App() {
   const [authMessage, setAuthMessage] = useState('')
   const [loggedInUser, setLoggedInUser] = useState(null)
   const [issPosition, setIssPosition] = useState(null)
+  const [nasaAsteroids, setNasaAsteroids] = useState([])
+  const [asteroidMarkers, setAsteroidMarkers] = useState([])
+  const [satellites, setSatellites] = useState([])
+  const [satelliteMarkers, setSatelliteMarkers] = useState([])
+
 
   const [showProfilePanel, setShowProfilePanel] = useState(false)
   const [profileForm, setProfileForm] = useState({
@@ -132,6 +175,73 @@ function App() {
       })
   }
 
+  const loadNasaAsteroids = () => {
+    fetch('http://localhost:8080/asteroids?startDate=2026-04-02&endDate=2026-04-02')
+      .then((res) => {
+        if (!res.ok) throw new Error('NASA asteroid verisi alınamadı')
+        return res.json()
+      })
+      .then((data) => {
+        const neoData = data.near_earth_objects || {}
+        const allAsteroids = Object.values(neoData).flat()
+
+        const mappedAsteroids = allAsteroids.map((item, index) => {
+          const approach = item.close_approach_data?.[0]
+
+          return {
+            id: Number(item.id) || 100000 + index,
+            name: item.name || 'Bilinmeyen Asteroid',
+            type: 'ASTEROID',
+            description: `NASA verisi. Yaklaşma tarihi: ${approach?.close_approach_date_full ||
+              approach?.close_approach_date ||
+              'Bilinmiyor'
+              }`,
+            status: item.is_potentially_hazardous_asteroid ? 'Riskli' : 'İzleniyor',
+            orbit: approach?.orbiting_body || 'Güneş Sistemi',
+            risk: item.is_potentially_hazardous_asteroid ? 'Yüksek' : 'Düşük',
+            nasaJplUrl: item.nasa_jpl_url || '',
+            diameter: item.estimated_diameter?.meters?.estimated_diameter_max || null,
+            velocity: approach?.relative_velocity?.kilometers_per_hour || null,
+            missDistance: approach?.miss_distance?.kilometers || null
+          }
+        })
+
+        setNasaAsteroids(mappedAsteroids)
+      })
+      .catch((err) => {
+        console.error('NASA asteroid yükleme hatası:', err)
+        setNasaAsteroids([])
+      })
+  }
+
+  const loadSatellites = () => {
+    fetch('http://localhost:8080/satellites')
+      .then((res) => {
+        if (!res.ok) throw new Error('Uydu verisi alınamadı')
+        return res.json()
+      })
+      .then((data) => {
+        const mapped = Array.isArray(data)
+          ? data.map((sat) => ({
+            id: Number(sat.id),
+            name: sat.name || 'Bilinmeyen Uydu',
+            type: 'UYDU',
+            description:
+              sat.description || 'CelesTrak API verisi ile alınan gerçek uydu kaydı.',
+            status: sat.status || 'Aktif',
+            orbit: sat.orbit || 'EARTH',
+            risk: sat.risk || 'Düşük'
+          }))
+          : []
+
+        setSatellites(mapped)
+      })
+      .catch((err) => {
+        console.error('Uydu yükleme hatası:', err)
+        setSatellites([])
+      })
+  }
+
   const loadFavorites = (userId) => {
     if (!userId) {
       setFavoriteIds([])
@@ -174,7 +284,10 @@ function App() {
     if (savedUser) {
       setLoggedInUser(JSON.parse(savedUser))
     }
+
     loadSpaceObjects()
+    loadNasaAsteroids()
+    loadSatellites()
   }, [])
 
   useEffect(() => {
@@ -212,15 +325,78 @@ function App() {
     return () => clearInterval(interval)
   }, [])
 
+
+
+  useEffect(() => {
+    if (!nasaAsteroids || nasaAsteroids.length === 0) {
+      setAsteroidMarkers([])
+      return
+    }
+
+    const markers = nasaAsteroids.map((ast, index) => {
+      const seed = String(ast.id)
+        .split('')
+        .reduce((a, b) => a + b.charCodeAt(0), 0)
+
+      const latBase = ((seed * 7) % 120) - 60
+      const lngBase = ((seed * 13) % 300) - 150
+
+      const latOffset = (index % 5) * 4 - 8
+      const lngOffset = (index % 4) * 6 - 9
+
+      return {
+        ...ast,
+        position: [latBase + latOffset, lngBase + lngOffset]
+      }
+    })
+
+    setAsteroidMarkers(markers)
+  }, [nasaAsteroids])
+
+  useEffect(() => {
+    if (!satellites || satellites.length === 0) {
+      setSatelliteMarkers([])
+      return
+    }
+
+    const markers = satellites.map((sat, index) => {
+      const seed = String(sat.id)
+        .split('')
+        .reduce((a, b) => a + b.charCodeAt(0), 0)
+
+      const latBase = ((seed * 5) % 120) - 60
+      const lngBase = ((seed * 11) % 300) - 150
+
+      const latOffset = (index % 4) * 5 - 7
+      const lngOffset = (index % 3) * 8 - 8
+
+      return {
+        ...sat,
+        position: [latBase + latOffset, lngBase + lngOffset]
+      }
+    })
+
+    setSatelliteMarkers(markers)
+  }, [satellites])
+
   const getFavoriteRecordByObjectId = (spaceObjectId) =>
     favoriteRecords.find((fav) => fav.spaceObjectId === spaceObjectId)
 
+  const allObjects = useMemo(() => {
+    return [...spaceObjects, ...nasaAsteroids, ...satellites]
+  }, [spaceObjects, nasaAsteroids, satellites])
+
+  console.log('spaceObjects:', spaceObjects.length)
+  console.log('nasaAsteroids:', nasaAsteroids.length)
+  console.log('allObjects:', allObjects.length)
+  console.log('asteroidMarkers:', asteroidMarkers.length)
+
   const favoriteObjects = useMemo(() => {
-    return spaceObjects.filter((object) => favoriteIds.includes(object.id))
-  }, [spaceObjects, favoriteIds])
+    return allObjects.filter((object) => favoriteIds.includes(object.id))
+  }, [allObjects, favoriteIds])
 
   const filteredObjects = useMemo(() => {
-    return spaceObjects.filter((object) => {
+    return allObjects.filter((object) => {
       const typeMatch = filterType === 'ALL' || object.type === filterType
       const statusMatch =
         filterStatus === 'ALL' || object.status === filterStatus
@@ -228,11 +404,11 @@ function App() {
 
       return typeMatch && statusMatch && riskMatch
     })
-  }, [spaceObjects, filterType, filterStatus, filterRisk])
+  }, [allObjects, filterType, filterStatus, filterRisk])
 
   const comparedObjects = useMemo(() => {
-    return spaceObjects.filter((object) => compareSelection.includes(object.id))
-  }, [spaceObjects, compareSelection])
+    return allObjects.filter((object) => compareSelection.includes(object.id))
+  }, [allObjects, compareSelection])
 
   const toggleFavorite = (spaceObjectId) => {
     if (!loggedInUser) {
@@ -866,6 +1042,31 @@ function App() {
               </div>
             </div>
 
+            {selectedObject.diameter && (
+              <div className="detail-info-grid" style={{ marginTop: '16px' }}>
+                <div className="detail-info-box">
+                  <strong>Çap (maks.)</strong>
+                  <span>{Number(selectedObject.diameter).toFixed(2)} m</span>
+                </div>
+                <div className="detail-info-box">
+                  <strong>Hız</strong>
+                  <span>
+                    {selectedObject.velocity
+                      ? `${Number(selectedObject.velocity).toFixed(2)} km/saat`
+                      : 'Bilinmiyor'}
+                  </span>
+                </div>
+                <div className="detail-info-box">
+                  <strong>Geçiş Mesafesi</strong>
+                  <span>
+                    {selectedObject.missDistance
+                      ? `${Number(selectedObject.missDistance).toFixed(0)} km`
+                      : 'Bilinmiyor'}
+                  </span>
+                </div>
+              </div>
+            )}
+
             <div className="detail-comments-section">
               <h3>Yorumlar</h3>
 
@@ -984,7 +1185,7 @@ function App() {
 
               <div className="hero-stats">
                 <div className="stat-box">
-                  <h3>{spaceObjects.length}+</h3>
+                  <h3>{allObjects.length}+</h3>
                   <p>Uzay Nesnesi</p>
                 </div>
                 <div className="stat-box">
@@ -1093,7 +1294,7 @@ function App() {
                   }}
                 >
                   <select
-                    className="auth-input"
+                    className="auth-input filter-select"
                     value={filterType}
                     onChange={(e) => setFilterType(e.target.value)}
                   >
@@ -1104,7 +1305,7 @@ function App() {
                   </select>
 
                   <select
-                    className="auth-input"
+                    className="auth-input filter-select"
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
                   >
@@ -1115,7 +1316,7 @@ function App() {
                   </select>
 
                   <select
-                    className="auth-input"
+                    className="auth-input filter-select"
                     value={filterRisk}
                     onChange={(e) => setFilterRisk(e.target.value)}
                   >
@@ -1181,6 +1382,18 @@ function App() {
                         <span className="card-type">{object.type}</span>
                         <h3>{object.name}</h3>
                         <p className="card-desc">{object.description}</p>
+                        {object.nasaJplUrl && (
+                          <p style={{ marginBottom: '12px' }}>
+                            <a
+                              href={object.nasaJplUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{ color: '#8ecbff' }}
+                            >
+                              NASA Detayı
+                            </a>
+                          </p>
+                        )}
                         <p>
                           <strong>Durum:</strong> {object.status}
                         </p>
@@ -1256,7 +1469,7 @@ function App() {
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
             {issPosition && (
-              <Marker position={issPosition}>
+              <Marker position={issPosition} icon={issIcon}>
                 <Popup>
                   <div>
                     <strong>ISS</strong>
@@ -1270,8 +1483,73 @@ function App() {
                 </Popup>
               </Marker>
             )}
-          </MapContainer>
 
+            {asteroidMarkers.map((ast) => (
+              <Marker
+                key={ast.id}
+                position={ast.position}
+                icon={ast.risk === 'Yüksek' ? dangerousAsteroidIcon : asteroidIcon}
+              >
+                <Popup>
+                  <div>
+                    <strong>{ast.name}</strong>
+                    <br />
+                    ASTEROID
+                    <br />
+                    Risk: {ast.risk}
+                    <br />
+                    Durum: {ast.status}
+                    <br />
+                    {ast.velocity && (
+                      <>
+                        Hız: {Number(ast.velocity).toFixed(0)} km/saat
+                        <br />
+                      </>
+                    )}
+                    <button
+                      onClick={() => openObjectDetail(ast)}
+                      style={{
+                        marginTop: '6px',
+                        padding: '4px 8px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Detay
+                    </button>
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
+
+            {satelliteMarkers.map((sat) => (
+              <Marker key={sat.id} position={sat.position} icon={satelliteIcon}>
+                <Popup>
+                  <div>
+                    <strong>{sat.name}</strong>
+                    <br />
+                    UYDU
+                    <br />
+                    Durum: {sat.status}
+                    <br />
+                    Yörünge: {sat.orbit}
+                    <br />
+                    Risk: {sat.risk}
+                    <br />
+                    <button
+                      onClick={() => openObjectDetail(sat)}
+                      style={{
+                        marginTop: '6px',
+                        padding: '4px 8px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Detay
+                    </button>
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
+          </MapContainer>
 
           {issPosition && (
             <div

@@ -892,6 +892,7 @@ button {
 }
 
 @media (max-width: 1100px) {
+
   .hero,
   .about-box {
     grid-template-columns: 1fr;
@@ -1103,4 +1104,28 @@ button {
 select.auth-input {
   appearance: none;
   cursor: pointer;
+}
+
+/* SELECT FIX */
+.filter-select {
+  cursor: pointer;
+}
+
+.filter-select option {
+  background-color: #0f172a;
+  color: #ffffff;
+}
+
+select {
+  background-color: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+}
+
+select option {
+  background-color: #0f172a;
+  color: #ffffff;
+}
+
+select option:hover {
+  background-color: #1e293b;
 }
