@@ -5,7 +5,7 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || 'https://galaxy-atlas-backend.onrender.com'
+  import.meta.env.VITE_API_URL || 'https://galaxy-atlas-backend.onrender.com'
 
 function App() {
 
