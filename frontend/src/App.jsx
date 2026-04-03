@@ -3,7 +3,47 @@ import './App.css'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || 'https://galaxy-atlas-backend.onrender.com'
+
 function App() {
+
+  const issIcon = L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  })
+
+  const asteroidIcon = L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-violet.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  })
+
+  const dangerousAsteroidIcon = L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-orange.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  })
+
+  const satelliteIcon = L.icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  })
+
   const fallbackObjects = [
     {
       id: 1,
@@ -73,7 +113,7 @@ function App() {
   const [selectedCommentObject, setSelectedCommentObject] = useState(null)
 
   const loadSpaceObjects = () => {
-    fetch('http://localhost:8080/space-objects')
+    fetch(`${API_BASE_URL}/space-objects`)
       .then((res) => {
         if (!res.ok) throw new Error('Nesneler alınamadı')
         return res.json()
@@ -100,8 +140,8 @@ function App() {
       })
   }
 
-  const loadFavorites = () => {
-    fetch(`http://localhost:8080/favorites/${TEST_USER_ID}`)
+  const loadNasaAsteroids = () => {
+    fetch(`${API_BASE_URL}/asteroids?startDate=2026-04-02&endDate=2026-04-02`)
       .then((res) => {
         if (!res.ok) throw new Error('Favoriler alınamadı')
         return res.json()
@@ -110,9 +150,57 @@ function App() {
         setFavorites(Array.isArray(data) ? data : [])
       })
       .catch((err) => {
-        console.error('Favori listeleme hatası:', err)
-        setFavorites([])
+        console.error('NASA asteroid yükleme hatası:', err)
+        setNasaAsteroids([])
       })
+  }
+
+  const loadSatellites = () => {
+    fetch(`${API_BASE_URL}/satellites`)
+      .then((res) => {
+        if (!res.ok) throw new Error('Uydu verisi alınamadı')
+        return res.json()
+      })
+      .then((data) => {
+        const mapped = Array.isArray(data)
+          ? data.map((sat) => ({
+            id: Number(sat.id),
+            name: sat.name || 'Bilinmeyen Uydu',
+            type: 'UYDU',
+            description:
+              sat.description || 'CelesTrak API verisi ile alınan gerçek uydu kaydı.',
+            status: sat.status || 'Aktif',
+            orbit: sat.orbit || 'EARTH',
+            risk: sat.risk || 'Düşük'
+          }))
+          : []
+
+        setSatellites(mapped)
+      })
+      .catch((err) => {
+        console.error('Uydu yükleme hatası:', err)
+        setSatellites([])
+      })
+  }
+
+  const loadFavorites = (userId) => {
+    if (!userId) {
+      setFavoriteIds([])
+      setFavoriteRecords([])
+      return
+    }
+
+    fetch(`${API_BASE_URL}/favorites/${userId}`)
+      .then((res) => {
+        if (!res.ok) throw new Error('Favoriler alınamadı')
+        return res.json()
+      })
+      .then((data) => {
+        const safeData = Array.isArray(data) ? data : []
+        setFavoriteRecords(safeData)
+        setFavoriteIds(safeData.map((fav) => fav.spaceObjectId))
+      })
+      .catch((err) => console.error('Favori listeleme hatası:', err))
   }
 
   const loadComments = (spaceObjectId) => {
@@ -121,7 +209,7 @@ function App() {
       return
     }
 
-    fetch(`http://localhost:8080/comments/${spaceObjectId}`)
+    fetch(`${API_BASE_URL}/comments/${spaceObjectId}`)
       .then((res) => {
         if (!res.ok) throw new Error('Yorumlar alınamadı')
         return res.json()
@@ -160,7 +248,7 @@ function App() {
 
   useEffect(() => {
     const fetchISS = () => {
-      fetch("http://localhost:8080/iss")
+      fetch(`${API_BASE_URL}/iss`)
         .then(res => res.json())
         .then(data => {
           const lat = parseFloat(data.iss_position.latitude)
@@ -185,35 +273,63 @@ function App() {
   const toggleFavorite = async (spaceObjectId) => {
     const isFavorite = favoriteObjectIds.includes(spaceObjectId)
 
-    try {
-      if (isFavorite) {
-        await fetch(
-          `http://localhost:8080/favorites?userId=${TEST_USER_ID}&spaceObjectId=${spaceObjectId}`,
-          {
-            method: 'DELETE'
-          }
-        )
-      } else {
-        await fetch('http://localhost:8080/favorites', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            userId: TEST_USER_ID,
-            spaceObjectId
-          })
-        })
+    if (existingFavorite) {
+      fetch(`${API_BASE_URL}/favorites?userId=${loggedInUser.id}&spaceObjectId=${spaceObjectId}`, {
+        method: 'DELETE'
       }
-
-      await loadFavorites()
-    } catch (error) {
-      console.error('Favori işlemi hatası:', error)
+      )
+        .then(() => loadFavorites(loggedInUser.id))
+        .catch((err) => console.error('Favori silme hatası:', err))
+      return
     }
+
+    fetch(`${API_BASE_URL}/favorites`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        userId: loggedInUser.id,
+        spaceObjectId
+      })
+    })
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) {
+          throw new Error(data.message || 'Favori işlemi başarısız')
+        }
+        return data
+      })
+      .then(() => loadFavorites(loggedInUser.id))
+      .catch((err) => console.error('Favori ekleme hatası:', err))
   }
 
-  const openCommentsPanel = (object) => {
-    setSelectedCommentObject(object)
+  const toggleCompareSelection = (objectId) => {
+    if (!loggedInUser) {
+      setAuthMessage('Karşılaştırma için önce giriş yapmalısınız.')
+      openAuthModal('login')
+      return
+    }
+
+    if (compareSelection.includes(objectId)) {
+      setCompareSelection(compareSelection.filter((id) => id !== objectId))
+      return
+    }
+
+    if (compareSelection.length >= 2) {
+      alert('En fazla 2 nesne seçebilirsiniz.')
+      return
+    }
+
+    setCompareSelection([...compareSelection, objectId])
+  }
+
+  const clearCompareSelection = () => {
+    setCompareSelection([])
+  }
+
+  const openObjectDetail = (object) => {
+    setSelectedObject(object)
     setNewComment('')
     setEditingCommentId(null)
     setEditedComment('')
@@ -231,24 +347,35 @@ function App() {
   const addComment = async () => {
     if (!selectedCommentObject || !newComment.trim()) return
 
-    try {
-      await fetch('http://localhost:8080/comments', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          userId: TEST_USER_ID,
-          spaceObjectId: selectedCommentObject.id,
-          content: newComment
-        })
-      })
-
-      setNewComment('')
-      loadComments(selectedCommentObject.id)
-    } catch (error) {
-      console.error('Yorum ekleme hatası:', error)
+    if (!loggedInUser) {
+      setAuthMessage('Yorum eklemek için önce giriş yapmalısınız.')
+      openAuthModal('login')
+      return
     }
+
+    if (!selectedObject) return
+
+    fetch(`${API_BASE_URL}/comments`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        userId: loggedInUser.id,
+        userName: loggedInUser.name,
+        spaceObjectId: selectedObject.id,
+        content: newComment
+      })
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('Yorum eklenemedi')
+        return res.json()
+      })
+      .then(() => {
+        setNewComment('')
+        loadComments(selectedObject.id)
+      })
+      .catch((err) => console.error('Yorum ekleme hatası:', err))
   }
 
   const startEditingComment = (comment) => {
@@ -264,20 +391,77 @@ function App() {
   const saveUpdatedComment = async (commentId) => {
     if (!editedComment.trim() || !selectedCommentObject) return
 
+    fetch(`${API_BASE_URL}/comments/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        userId: loggedInUser.id,
+        content: editedComment
+      })
+    })
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}))
+        if (!res.ok) {
+          throw new Error(data.message || 'Yorum güncellenemedi')
+        }
+        return data
+      })
+      .then(() => {
+        setEditingCommentId(null)
+        setEditedComment('')
+        if (selectedObject) {
+          loadComments(selectedObject.id)
+        }
+      })
+      .catch((err) => console.error('Yorum güncelleme hatası:', err))
+  }
+
+  const deleteComment = (id) => {
+    if (!loggedInUser) return
+
+    fetch(`${API_BASE_URL}/comments/${id}`, {
+      method: 'DELETE'
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error('Yorum silinemedi')
+        return Promise.resolve()
+      })
+      .then(() => {
+        if (selectedObject) {
+          loadComments(selectedObject.id)
+        }
+      })
+      .catch((err) => console.error('Yorum silme hatası:', err))
+  }
+
+  const handleRegister = async () => {
+    setAuthMessage('')
+
     try {
-      await fetch(`http://localhost:8080/comments/${commentId}`, {
-        method: 'PUT',
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          content: editedComment
-        })
+        body: JSON.stringify(registerForm)
       })
 
-      setEditingCommentId(null)
-      setEditedComment('')
-      loadComments(selectedCommentObject.id)
+      const data = await response.json()
+
+      if (!response.ok) {
+        setAuthMessage(data.message || 'Kayıt işlemi başarısız.')
+        return
+      }
+
+      setAuthMessage('Kayıt başarılı. Şimdi giriş yapabilirsiniz.')
+      setRegisterForm({
+        name: '',
+        email: '',
+        password: ''
+      })
+      setAuthMode('login')
     } catch (error) {
       console.error('Yorum güncelleme hatası:', error)
     }
@@ -287,14 +471,121 @@ function App() {
     if (!selectedCommentObject) return
 
     try {
-      await fetch(`http://localhost:8080/comments/${commentId}`, {
-        method: 'DELETE'
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(loginForm)
       })
 
-      loadComments(selectedCommentObject.id)
+      const data = await response.json()
+
+      if (!response.ok) {
+        setAuthMessage(data.message || 'Giriş başarısız.')
+        return
+      }
+
+      setLoggedInUser(data.user)
+      localStorage.setItem('loggedInUser', JSON.stringify(data.user))
+      if (data.token) {
+        localStorage.setItem('token', data.token)
+      }
+
+      setAuthMessage('')
+      setLoginForm({
+        email: '',
+        password: ''
+      })
+      setShowAuthPanel(false)
     } catch (error) {
-      console.error('Yorum silme hatası:', error)
+      console.error('Giriş yapma hatası:', error)
+      setAuthMessage('Sunucuya bağlanırken hata oluştu.')
     }
+  }
+
+  const handleProfileUpdate = async () => {
+    if (!loggedInUser) return
+
+    setProfileMessage('')
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/update/${loggedInUser.id}`, {
+
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(profileForm)
+      }
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setProfileMessage(data.message || 'Profil güncellenemedi.')
+        return
+      }
+
+      setLoggedInUser(data.user)
+      localStorage.setItem('loggedInUser', JSON.stringify(data.user))
+      setProfileMessage('Profil başarıyla güncellendi.')
+    } catch (error) {
+      console.error('Profil güncelleme hatası:', error)
+      setProfileMessage('Sunucuya bağlanırken hata oluştu.')
+    }
+  }
+
+  const handleDeleteAccount = async () => {
+    if (!loggedInUser) return
+
+    const confirmDelete = window.confirm(
+      'Hesabınızı silmek istediğinize emin misiniz?'
+    )
+
+    if (!confirmDelete) return
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/delete/${loggedInUser.id}`, {
+
+        method: 'DELETE'
+      }
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setProfileMessage(data.message || 'Hesap silinemedi.')
+        return
+      }
+
+      closeProfilePanel()
+      logout()
+      alert('Hesap başarıyla silindi.')
+    } catch (error) {
+      console.error('Hesap silme hatası:', error)
+      setProfileMessage('Sunucuya bağlanırken hata oluştu.')
+    }
+  }
+
+  const logout = () => {
+    setLoggedInUser(null)
+    setFavoriteIds([])
+    setFavoriteRecords([])
+    setComments([])
+    setNewComment('')
+    setEditedComment('')
+    setEditingCommentId(null)
+    setAuthMessage('')
+    setShowAuthPanel(false)
+    setAuthMode('login')
+    setSelectedObject(null)
+    setShowProfilePanel(false)
+    setProfileMessage('')
+    setCompareSelection([])
+
+    localStorage.removeItem('loggedInUser')
+    localStorage.removeItem('token')
   }
 
   const renderObjectCard = (object) => {
