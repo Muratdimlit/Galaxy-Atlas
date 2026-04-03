@@ -4,6 +4,9 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || 'https://galaxy-atlas-backend.onrender.com'
+
 function App() {
 
   const issIcon = L.icon({
@@ -149,7 +152,7 @@ function App() {
   }
 
   const loadSpaceObjects = () => {
-    fetch('http://localhost:8080/space-objects')
+    fetch(`${API_BASE_URL}/space-objects`)
       .then((res) => {
         if (!res.ok) throw new Error('Nesneler alınamadı')
         return res.json()
@@ -176,7 +179,7 @@ function App() {
   }
 
   const loadNasaAsteroids = () => {
-    fetch('http://localhost:8080/asteroids?startDate=2026-04-02&endDate=2026-04-02')
+    fetch(`${API_BASE_URL}/asteroids?startDate=2026-04-02&endDate=2026-04-02`)
       .then((res) => {
         if (!res.ok) throw new Error('NASA asteroid verisi alınamadı')
         return res.json()
@@ -215,7 +218,7 @@ function App() {
   }
 
   const loadSatellites = () => {
-    fetch('http://localhost:8080/satellites')
+    fetch(`${API_BASE_URL}/satellites`)
       .then((res) => {
         if (!res.ok) throw new Error('Uydu verisi alınamadı')
         return res.json()
@@ -249,7 +252,7 @@ function App() {
       return
     }
 
-    fetch(`http://localhost:8080/favorites/${userId}`)
+    fetch(`${API_BASE_URL}/favorites/${userId}`)
       .then((res) => {
         if (!res.ok) throw new Error('Favoriler alınamadı')
         return res.json()
@@ -268,7 +271,7 @@ function App() {
       return
     }
 
-    fetch(`http://localhost:8080/comments/${spaceObjectId}`)
+    fetch(`${API_BASE_URL}/comments/${spaceObjectId}`)
       .then((res) => {
         if (!res.ok) throw new Error('Yorumlar alınamadı')
         return res.json()
@@ -310,7 +313,7 @@ function App() {
 
   useEffect(() => {
     const fetchISS = () => {
-      fetch("http://localhost:8080/iss")
+      fetch(`${API_BASE_URL}/iss`)
         .then(res => res.json())
         .then(data => {
           const lat = parseFloat(data.iss_position.latitude)
@@ -420,18 +423,16 @@ function App() {
     const existingFavorite = getFavoriteRecordByObjectId(spaceObjectId)
 
     if (existingFavorite) {
-      fetch(
-        `http://localhost:8080/favorites?userId=${loggedInUser.id}&spaceObjectId=${spaceObjectId}`,
-        {
-          method: 'DELETE'
-        }
+      fetch(`${API_BASE_URL}/favorites?userId=${loggedInUser.id}&spaceObjectId=${spaceObjectId}`, {
+        method: 'DELETE'
+      }
       )
         .then(() => loadFavorites(loggedInUser.id))
         .catch((err) => console.error('Favori silme hatası:', err))
       return
     }
 
-    fetch('http://localhost:8080/favorites', {
+    fetch(`${API_BASE_URL}/favorites`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -502,7 +503,7 @@ function App() {
 
     if (!selectedObject) return
 
-    fetch('http://localhost:8080/comments', {
+    fetch(`${API_BASE_URL}/comments`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -539,7 +540,7 @@ function App() {
   const saveUpdatedComment = (id) => {
     if (!editedComment.trim() || !loggedInUser) return
 
-    fetch(`http://localhost:8080/comments/${id}`, {
+    fetch(`${API_BASE_URL}/comments/${id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json'
@@ -569,7 +570,7 @@ function App() {
   const deleteComment = (id) => {
     if (!loggedInUser) return
 
-    fetch(`http://localhost:8080/comments/${id}`, {
+    fetch(`${API_BASE_URL}/comments/${id}`, {
       method: 'DELETE'
     })
       .then((res) => {
@@ -588,7 +589,7 @@ function App() {
     setAuthMessage('')
 
     try {
-      const response = await fetch('http://localhost:8080/auth/register', {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -620,7 +621,7 @@ function App() {
     setAuthMessage('')
 
     try {
-      const response = await fetch('http://localhost:8080/auth/login', {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -659,15 +660,14 @@ function App() {
     setProfileMessage('')
 
     try {
-      const response = await fetch(
-        `http://localhost:8080/auth/update/${loggedInUser.id}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(profileForm)
-        }
+      const response = await fetch(`${API_BASE_URL}/auth/update/${loggedInUser.id}`, {
+
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(profileForm)
+      }
       )
 
       const data = await response.json()
@@ -696,11 +696,10 @@ function App() {
     if (!confirmDelete) return
 
     try {
-      const response = await fetch(
-        `http://localhost:8080/auth/delete/${loggedInUser.id}`,
-        {
-          method: 'DELETE'
-        }
+      const response = await fetch(`${API_BASE_URL}/auth/delete/${loggedInUser.id}`, {
+
+        method: 'DELETE'
+      }
       )
 
       const data = await response.json()
