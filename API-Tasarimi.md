@@ -7,6 +7,10 @@ Projenin OpenAPI (Swagger) spesifikasyon dosyasına aşağıdaki linkten erişeb
 👉 [galaxy-atlas.yaml](./galaxy-atlas.yaml)
 
 ---
+
+## OpenAPI Specification
+
+```yaml
 openapi: 3.0.3
 info:
   title: Galaxy Atlas API
@@ -280,7 +284,4 @@ components:
           type: integer
         content:
           type: string
-
-
----
-
+```
