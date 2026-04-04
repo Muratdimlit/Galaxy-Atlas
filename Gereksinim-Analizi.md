@@ -43,27 +43,27 @@ Tüm gereksinimlerinizi çıkardıktan sonra beraber tartışıyoruz ve son gere
 
 8\. Uzay Nesnelerini Filtreleme (Murat Dimlit)
 
-9\. Olağandışı Nesne Tespiti (Murat Dimlit)
 
 
 
-10\. Favoriye Ekleme (Berra Doğruer)
 
-11\. Favoriden Çıkarma (Berra Doğruer)
+9\. Favoriye Ekleme (Berra Doğruer)
 
-12\. Favori Listesini Görüntüleme (Berra Doğruer)
+10\. Favoriden Çıkarma (Berra Doğruer)
 
-13\. Harita Üzerinde Asteroid Gösterme (Berra Doğruer)
+11\. Favori Listesini Görüntüleme (Berra Doğruer)
 
-14\. Harita Üzerinde Uydu Gösterme (Berra Doğruer)
+12\. Harita Üzerinde Asteroid Gösterme (Berra Doğruer)
 
-15\. Harita Üzerinde Roket Gösterme (Berra Doğruer)
+13\. Harita Üzerinde Uydu Gösterme (Berra Doğruer)
 
-16\. Yorum Yapma (Berra Doğruer)
+14\. Harita Üzerinde Roket Gösterme (Berra Doğruer)
 
-17\. Yorum Silme (Berra Doğruer)
+15\. Yorum Yapma (Berra Doğruer)
 
-18\. AI Destekli Nesne Önerisi (Berra Doğruer)
+16\. Yorum Silme (Berra Doğruer)
+
+
 
 
 
