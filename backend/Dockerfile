@@ -1,18 +1,18 @@
-FROM eclipse-temurin:21-jdk AS build
+FROM eclipse-temurin:21-jdk
+
 WORKDIR /app
 
-COPY .mvn .mvn
-COPY mvnw .
-COPY pom.xml .
+COPY backend/.mvn .mvn
+COPY backend/mvnw .
+COPY backend/pom.xml .
 RUN chmod +x mvnw
+
 RUN ./mvnw dependency:go-offline
 
-COPY src src
+COPY backend/src src
+
 RUN ./mvnw clean package -DskipTests
 
-FROM eclipse-temurin:21-jre
-WORKDIR /app
-COPY --from=build /app/target/backend-0.0.1-SNAPSHOT.jar app.jar
-
 EXPOSE 8080
-ENTRYPOINT ["sh", "-c", "java -jar app.jar --server.port=${PORT:-8080}"]
+
+CMD ["sh", "-c", "java -jar target/*.jar"]
