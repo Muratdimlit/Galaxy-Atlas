@@ -40,7 +40,4 @@
 - **API Metodu:** DELETE /comments/{commentId}  
 - **Açıklama:** Kullanıcının daha önce yaptığı yorumu silmesini sağlar. Güvenlik için giriş yapmış olmak gerekir ve kullanıcı yalnızca kendi yorumunu silebilir.
 
-9. **AI Destekli Nesne Önerisi (Yapay Zeka Gereksinimi)**
 
-- **API Metodu:** GET /recommendations  
-- **Açıklama:** Kullanıcının geçmişte görüntülediği, favorilere eklediği ve yorum yaptığı uzay nesnelerine göre benzer uzay nesnelerini önerir. Kullanıcı önerilen uzay nesnelerini liste halinde görüntüleyebilir. Güvenlik için giriş yapmış olmak gerekir.
