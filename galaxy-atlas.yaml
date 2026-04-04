@@ -1,36 +1,66 @@
 openapi: 3.0.3
 info:
   title: Galaxy Atlas API
-  description: Uzay nesnelerini (asteroid, uydu ve roket) takip etmek için geliştirilen RESTful API.
+  description: |
+    Galaxy Atlas - Roket, Uydu ve Göktaşı Takip Sistemi API.
+
+    Özellikler:
+    - Kullanıcı hesap yönetimi
+    - Uzay nesnesi listeleme ve detay
+    - Karşılaştırma ve filtreleme
+    - Favori sistemi
+    - Harita üzerinde gösterim
+    - Yorum sistemi
   version: 1.0.0
 
 servers:
-  - url: https://api.galaxyatlas.com/v1
-    description: Production server
-  - url: http://localhost:3000
-    description: Development server
+  - url: https://galaxy-atlas-backend.onrender.com
+    description: Production
+  - url: http://localhost:8080
+    description: Development
+
+tags:
+  - name: auth
+  - name: users
+  - name: space-objects
+  - name: favorites
+  - name: map
+  - name: comments
+
 paths:
 
   /auth/register:
     post:
-      summary: Yeni kullanıcı kaydı oluşturur
-      description: Kullanıcıların sisteme kayıt olmasını sağlar.
+      tags: [auth]
+      summary: R1 - Hesap oluşturma
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegister'
       responses:
         '201':
-          description: Kullanıcı başarıyla oluşturuldu
+          description: Kullanıcı oluşturuldu
 
   /auth/login:
     post:
-      summary: Kullanıcı giriş yapar
-      description: Kullanıcının sisteme giriş yapmasını sağlar.
+      tags: [auth]
+      summary: R2 - Giriş yapma
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Login'
       responses:
         '200':
           description: Giriş başarılı
 
   /users/{userId}:
     put:
-      summary: Kullanıcı profilini günceller
-      description: Kullanıcının profil bilgilerini günceller.
+      tags: [users]
+      summary: R3 - Hesap güncelle
       parameters:
         - name: userId
           in: path
@@ -39,11 +69,11 @@ paths:
             type: integer
       responses:
         '200':
-          description: Profil güncellendi
+          description: Güncellendi
 
     delete:
-      summary: Kullanıcı hesabını siler
-      description: Kullanıcının hesabını sistemden kaldırır.
+      tags: [users]
+      summary: R4 - Hesap sil
       parameters:
         - name: userId
           in: path
@@ -51,20 +81,21 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
-          description: Kullanıcı silindi
+        '204':
+          description: Silindi
+
   /space-objects:
     get:
-      summary: Uzay nesnelerini listeler
-      description: Sistemde bulunan asteroid, uydu ve roketleri listeler.
+      tags: [space-objects]
+      summary: R5 - Listeleme
       responses:
         '200':
-          description: Uzay nesneleri başarıyla listelendi
+          description: Liste döner
 
   /space-objects/{id}:
     get:
-      summary: Uzay nesnesi detayını getirir
-      description: Seçilen uzay nesnesinin detay bilgilerini getirir.
+      tags: [space-objects]
+      summary: R6 - Detay
       parameters:
         - name: id
           in: path
@@ -73,110 +104,170 @@ paths:
             type: integer
       responses:
         '200':
-          description: Uzay nesnesi detayı getirildi
+          description: Detay döner
 
   /space-objects/compare:
-    post:
-      summary: Uzay nesnelerini karşılaştırır
-      description: Seçilen iki veya daha fazla uzay nesnesini karşılaştırır.
+    get:
+      tags: [space-objects]
+      summary: R7 - Karşılaştırma
+      parameters:
+        - name: ids
+          in: query
+          required: true
+          schema:
+            type: string
+            example: "1,2"
       responses:
         '200':
-          description: Karşılaştırma başarılı
+          description: Karşılaştırma sonucu
 
   /space-objects/filter:
-    post:
-      summary: Uzay nesnelerini filtreler
-      description: Hız, mesafe veya tür gibi kriterlere göre uzay nesnelerini filtreler.
+    get:
+      tags: [space-objects]
+      summary: R8 - Filtreleme
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
       responses:
         '200':
-          description: Filtreleme başarılı
+          description: Filtrelenmiş liste
 
-  /space-objects/anomaly-detect:
-    post:
-      summary: Olağandışı uzay nesnelerini tespit eder
-      description: Yapay zeka destekli şekilde olağandışı hız veya mesafeye sahip nesneleri tespit eder.
-      responses:
-        '200':
-          description: Anomali tespiti başarılı
   /favorites:
     post:
-      summary: Favoriye ekler
-      description: Kullanıcının seçtiği uzay nesnesini favorilerine ekler.
+      tags: [favorites]
+      summary: R9 - Favoriye ekleme
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: integer
+                spaceObjectId:
+                  type: integer
       responses:
         '201':
-          description: Favoriye eklendi
+          description: Eklendi
 
     get:
-      summary: Favori listesini getirir
-      description: Kullanıcının favoriye eklediği uzay nesnelerini listeler.
-      responses:
-        '200':
-          description: Favori listesi getirildi
-
-  /favorites/{favoriteId}:
-    delete:
-      summary: Favoriden çıkarır
-      description: Kullanıcının favorilere eklediği nesneyi favorilerden kaldırır.
+      tags: [favorites]
+      summary: R11 - Favori liste
       parameters:
-        - name: favoriteId
-          in: path
+        - name: userId
+          in: query
           required: true
           schema:
             type: integer
       responses:
         '200':
-          description: Favoriden çıkarıldı
+          description: Favoriler
+
+  /favorites/{id}:
+    delete:
+      tags: [favorites]
+      summary: R10 - Favoriden çıkarma
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Silindi
 
   /map/asteroids:
     get:
-      summary: Harita üzerinde asteroidleri gösterir
-      description: Asteroidlerin harita üzerindeki konumlarını getirir.
-      responses:
-        '200':
-          description: Asteroid konumları getirildi
+      tags: [map]
+      summary: R12 - Asteroid harita
 
   /map/satellites:
     get:
-      summary: Harita üzerinde uyduları gösterir
-      description: Uyduların harita üzerindeki konumlarını getirir.
-      responses:
-        '200':
-          description: Uydu konumları getirildi
+      tags: [map]
+      summary: R13 - Uydu harita
 
   /map/rockets:
     get:
-      summary: Harita üzerinde roketleri gösterir
-      description: Roketlerin harita üzerindeki konumlarını getirir.
-      responses:
-        '200':
-          description: Roket konumları getirildi
+      tags: [map]
+      summary: R14 - Roket harita
 
   /comments:
     post:
-      summary: Yorum ekler
-      description: Kullanıcının uzay nesneleri hakkında yorum yapmasını sağlar.
+      tags: [comments]
+      summary: R15 - Yorum ekleme
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Comment'
       responses:
         '201':
-          description: Yorum eklendi
+          description: Eklendi
 
-  /comments/{commentId}:
-    delete:
-      summary: Yorumu siler
-      description: Kullanıcının kendi yorumunu silmesini sağlar.
+  /comments/{id}:
+    put:
+      tags: [comments]
+      summary: R16 - Yorum güncelle
       parameters:
-        - name: commentId
+        - name: id
           in: path
           required: true
           schema:
             type: integer
       responses:
         '200':
-          description: Yorum silindi
+          description: Güncellendi
 
-  /recommendations:
-    get:
-      summary: Yapay zeka destekli öneriler getirir
-      description: Kullanıcının geçmiş işlemlerine göre benzer uzay nesnelerini önerir.
+    delete:
+      tags: [comments]
+      summary: R16 - Yorum sil
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
       responses:
-        '200':
-          description: Öneriler başarıyla getirildi
+        '204':
+          description: Silindi
+
+components:
+
+  schemas:
+
+    UserRegister:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+
+    Login:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+
+    Comment:
+      type: object
+      properties:
+        userId:
+          type: integer
+        spaceObjectId:
+          type: integer
+        content:
+          type: string
