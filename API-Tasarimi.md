@@ -1,274 +1,45 @@
+# Galaxy Atlas API Tasarımı
 
-openapi: 3.0.3
-info:
-  title: Galaxy Atlas API
-  description: |
-    Galaxy Atlas - Roket, Uydu ve Göktaşı Takip Sistemi API.
+## 📄 OpenAPI Specification
 
-    Özellikler:
-    - Kullanıcı hesap yönetimi
-    - Uzay nesnesi listeleme ve detay
-    - Karşılaştırma ve filtreleme
-    - Favori sistemi
-    - Harita üzerinde gösterim
-    - Yorum sistemi
-  version: 1.0.0
+Projenin OpenAPI (Swagger) spesifikasyon dosyasına aşağıdaki linkten erişebilirsiniz:
 
-servers:
-  - url: https://galaxy-atlas-backend.onrender.com
-    description: Production
-  - url: http://localhost:8080
-    description: Development
+👉 [galaxy-atlas.yaml](./galaxy-atlas.yaml)
 
-tags:
-  - name: auth
-  - name: users
-  - name: space-objects
-  - name: favorites
-  - name: map
-  - name: comments
+---
 
-paths:
+## 📌 API Genel Açıklama
 
-  /auth/register:
-    post:
-      tags: [auth]
-      summary: R1 - Hesap oluşturma
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserRegister'
-      responses:
-        '201':
-          description: Kullanıcı oluşturuldu
+Galaxy Atlas API, roket, uydu ve göktaşı takibi için geliştirilmiş RESTful bir servistir.
 
-  /auth/login:
-    post:
-      tags: [auth]
-      summary: R2 - Giriş yapma
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Login'
-      responses:
-        '200':
-          description: Giriş başarılı
+### 🔹 Özellikler:
 
-  /users/{userId}:
-    put:
-      tags: [users]
-      summary: R3 - Hesap güncelle
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Güncellendi
+- Kullanıcı hesap yönetimi
+- Uzay nesnesi listeleme ve detay görüntüleme
+- Karşılaştırma ve filtreleme
+- Favori sistemi
+- Harita üzerinde gösterim
+- Yorum sistemi
 
-    delete:
-      tags: [users]
-      summary: R4 - Hesap sil
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '204':
-          description: Silindi
+---
 
-  /space-objects:
-    get:
-      tags: [space-objects]
-      summary: R5 - Listeleme
-      responses:
-        '200':
-          description: Liste döner
+## 📌 Sunucu Bilgileri
 
-  /space-objects/{id}:
-    get:
-      tags: [space-objects]
-      summary: R6 - Detay
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Detay döner
+- 🌐 Production: https://galaxy-atlas-backend.onrender.com  
+- 💻 Development: http://localhost:8080  
 
-  /space-objects/compare:
-    get:
-      tags: [space-objects]
-      summary: R7 - Karşılaştırma
-      parameters:
-        - name: ids
-          in: query
-          required: true
-          schema:
-            type: string
-            example: "1,2"
-      responses:
-        '200':
-          description: Karşılaştırma sonucu
+---
 
-  /space-objects/filter:
-    get:
-      tags: [space-objects]
-      summary: R8 - Filtreleme
-      parameters:
-        - name: type
-          in: query
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Filtrelenmiş liste
+## 📌 Kullanılan Teknolojiler
 
-  /favorites:
-    post:
-      tags: [favorites]
-      summary: R9 - Favoriye ekleme
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                userId:
-                  type: integer
-                spaceObjectId:
-                  type: integer
-      responses:
-        '201':
-          description: Eklendi
+- Spring Boot (Backend)
+- PostgreSQL (Database)
+- React (Frontend)
+- Render (Deployment)
+- Vercel (Frontend Hosting)
 
-    get:
-      tags: [favorites]
-      summary: R11 - Favori liste
-      parameters:
-        - name: userId
-          in: query
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Favoriler
+---
 
-  /favorites/{id}:
-    delete:
-      tags: [favorites]
-      summary: R10 - Favoriden çıkarma
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '204':
-          description: Silindi
+## 📌 Not
 
-  /map/asteroids:
-    get:
-      tags: [map]
-      summary: R12 - Asteroid harita
-
-  /map/satellites:
-    get:
-      tags: [map]
-      summary: R13 - Uydu harita
-
-  /map/rockets:
-    get:
-      tags: [map]
-      summary: R14 - Roket harita
-
-  /comments:
-    post:
-      tags: [comments]
-      summary: R15 - Yorum ekleme
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Comment'
-      responses:
-        '201':
-          description: Eklendi
-
-  /comments/{id}:
-    put:
-      tags: [comments]
-      summary: R16 - Yorum güncelle
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Güncellendi
-
-    delete:
-      tags: [comments]
-      summary: R16 - Yorum sil
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '204':
-          description: Silindi
-
-components:
-
-  schemas:
-
-    UserRegister:
-      type: object
-      required: [email, password]
-      properties:
-        email:
-          type: string
-        password:
-          type: string
-        firstName:
-          type: string
-        lastName:
-          type: string
-
-    Login:
-      type: object
-      required: [email, password]
-      properties:
-        email:
-          type: string
-        password:
-          type: string
-
-    Comment:
-      type: object
-      properties:
-        userId:
-          type: integer
-        spaceObjectId:
-          type: integer
-        content:
-          type: string
+Detaylı endpoint ve request/response yapıları için YAML dosyasını inceleyiniz.
