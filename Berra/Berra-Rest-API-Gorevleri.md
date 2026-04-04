@@ -12,12 +12,12 @@
 - Authentication: Bearer Token gerekli
 - **Request Body:**
 
- ---json
+```json
 {
   "userId": 1,
   "spaceObjectId": 2
 }
----
+```
 
 - Response: 201 Created
 
