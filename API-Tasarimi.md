@@ -1,8 +1,3 @@
-# API Tasarımı - OpenAPI Specification
-
-**OpenAPI Spesifikasyon Dosyası:** [galaxy-atlas.yaml](./galaxy-atlas.yaml)
-
-Bu doküman, OpenAPI Specification (OAS) standardına göre hazırlanmış Galaxy Atlas API tasarımını içermektedir.
 
 openapi: 3.0.3
 info:
