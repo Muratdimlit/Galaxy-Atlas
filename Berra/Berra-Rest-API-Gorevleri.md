@@ -10,12 +10,14 @@
 
 - Endpoint: POST /favorites
 - Authentication: Bearer Token gerekli
-- Request Body:
+- **Request Body:**
 
+ ---json
 {
   "userId": 1,
   "spaceObjectId": 2
 }
+---
 
 - Response: 201 Created
 
