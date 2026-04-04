@@ -40,7 +40,3 @@
 - **API Metodu:** POST /space-objects/filter  
 - **Açıklama:** Kullanıcının belirlediği kriterlere göre uzay nesnelerini filtrelemeyi sağlar. Hız, mesafe veya tür gibi kriterlerle sonuç listesi daraltılabilir.
 
-9. **Olağandışı Nesne Tespiti (Yapay Zeka Gereksinimi)**
-
-- **API Metodu:** POST /space-objects/anomaly-detect  
-- **Açıklama:** Normal değerlerin dışında hız veya mesafeye sahip uzay nesnelerini tespit eder. Sistem bu nesneleri belirleyerek kullanıcıya bildirir ve dikkat çekici şekilde gösterir.
