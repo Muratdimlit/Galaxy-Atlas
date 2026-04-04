@@ -2,7 +2,7 @@
 
 *API Test Videosu:* Link buraya eklenecek
 
-*API Adresi:* https://galaxy-atlas-backend.onrender.com
+*API Adresi:* https://galaxy-atlas-pearl.vercel.app
 
 ---
 
