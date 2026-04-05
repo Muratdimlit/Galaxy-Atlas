@@ -1,8 +1,11 @@
 # Video Sunum
 
-## Sunum Videosu
+## 🎥 Sunum Videoları
 
-> **Video Linki:** [Sunum videosu linki buraya eklenecek](https://example.com)
+
+### 👤 Berra Doğruer
+- 🎬 [https://www.youtube.com/watch?v=UjCMixEtSC4](https://www.youtube.com/watch?v=UjCMixEtSC4)
+- 💻 [https://www.youtube.com/watch?v=kKjy38TJzNE](https://www.youtube.com/watch?v=kKjy38TJzNE)
 
 ---
 
