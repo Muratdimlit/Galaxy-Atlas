@@ -36,9 +36,9 @@ Celestrack
 
 ## Proje Linkleri
 
-- REST API Adresi: yakında eklenecek
-- Web Frontend Adresi: yakında eklenecek
-- Mobil Uygulama: yakında eklenecek
+- 🌐 REST API: https://galaxy-atlas-backend.onrender.com  
+- 💻 Web Uygulaması: https://galaxy-atlas-pearl.vercel.app  
+- 📱 Mobil Uygulama: bulunmamaktadır
 
 ---
 
