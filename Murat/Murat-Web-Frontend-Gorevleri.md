@@ -1,6 +1,6 @@
 # Murat - Web Frontend Görevleri
 
-**Web Test Videosu:** Link buraya eklenecek
+**Web Test Videosu:** [https://www.youtube.com/watch?v=JRNxZVIr4UQ](https://www.youtube.com/watch?v=JRNxZVIr4UQ)
 
 **Web Adresi:** [https://galaxy-atlas-pearl.vercel.app](https://galaxy-atlas-pearl.vercel.app)
 
