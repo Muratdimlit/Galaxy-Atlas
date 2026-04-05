@@ -2,7 +2,7 @@
 
 # Berra Doğruer - REST API Görevleri
 
-**API Test Videosu:** [https://www.youtube.com/watch?v=UjCMixEtSC4](https://www.youtube.com/watch?v=UjCMixEtSC4)
+**API Test Videosu:** [https://www.youtube.com/watch?v=kKjy38TJzNE](https://www.youtube.com/watch?v=kKjy38TJzNE)
 
 **API Adresi:** [https://galaxy-atlas-pearl.vercel.app](https://galaxy-atlas-pearl.vercel.app)
 
