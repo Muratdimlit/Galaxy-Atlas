@@ -50,7 +50,7 @@ export default function SpaceObjectDetailScreen({ route }) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{object.name}</Text>
-      <Text style={styles.requirement}>R6 - Detay Görüntüleme</Text>
+      <Text style={styles.requirement}> Detay Görüntüleme</Text>
 
       <View style={styles.box}>
         <Text style={styles.label}>Tür</Text>

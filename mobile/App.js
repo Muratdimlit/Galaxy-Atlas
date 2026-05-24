@@ -12,6 +12,10 @@ import SpaceObjectDetailScreen from "./src/screens/SpaceObjectDetailScreen";
 import ProfileScreen from "./src/screens/ProfileScreen";
 import CompareScreen from "./src/screens/CompareScreen";
 import FilterScreen from "./src/screens/FilterScreen";
+import FavoritesScreen from "./src/screens/FavoriteScreen";
+import CommentsScreen from "./src/screens/CommentScreen";
+import MapScreen from "./src/screens/MapScreen";
+
 
 const Stack = createNativeStackNavigator();
 
@@ -81,6 +85,23 @@ export default function App() {
             name="Filter"
             component={FilterScreen}
             options={{ title: "Filtreleme" }}
+          />
+
+          <Stack.Screen
+            name="Favorites"
+            component={FavoritesScreen}
+            options={{ title: "Favoriler" }}
+          />
+          <Stack.Screen
+            name="Comments"
+            component={CommentsScreen}
+            options={{ title: "Yorumlar" }}
+          />
+
+          <Stack.Screen
+            name="Map"
+            component={MapScreen}
+            options={{ title: "Harita" }}
           />
         </Stack.Navigator>
       </NavigationContainer>

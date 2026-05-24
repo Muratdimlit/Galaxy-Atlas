@@ -45,7 +45,7 @@ export default function FilterScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>R8 - Filtreleme</Text>
+      <Text style={styles.title}> Filtreleme</Text>
       <Text style={styles.subtitle}>
         Uzay nesneleri türlerine göre backend üzerinden filtrelenir.
       </Text>

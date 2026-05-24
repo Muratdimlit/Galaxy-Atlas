@@ -62,7 +62,7 @@ export default function SpaceObjectsScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>R5 - Uzay Nesneleri</Text>
+      <Text style={styles.title}> Uzay Nesneleri</Text>
       <Text style={styles.subtitle}>
         Veriler Spring Boot REST API üzerinden getiriliyor.
       </Text>

@@ -1,5 +1,5 @@
 
-const API_BASE_URL = "http://172.20.10.2:8080";
+const API_BASE_URL = "http://172.20.10.7:8080";
 
 async function request(endpoint, options = {}) {
   try {
@@ -106,4 +106,61 @@ export async function filterSpaceObjects(type) {
   }
 
   return request("/space-objects");
+}
+
+// R9 - Favoriye ekleme
+export async function addFavorite(userId, spaceObjectId) {
+  return request("/favorites", {
+    method: "POST",
+    body: JSON.stringify({
+      userId,
+      spaceObjectId
+    })
+  });
+}
+
+// R10 - Favoriden çıkarma
+export async function removeFavorite(userId, spaceObjectId) {
+  return request(`/favorites?userId=${userId}&spaceObjectId=${spaceObjectId}`, {
+    method: "DELETE"
+  });
+}
+
+// R11 - Favori listesini görüntüleme
+export async function getFavoritesByUser(userId) {
+  return request(`/favorites/${userId}`);
+}
+
+// R15 - Yorum yapma
+export async function addComment(userId, spaceObjectId, content) {
+  return request("/comments", {
+    method: "POST",
+    body: JSON.stringify({
+      userId,
+      spaceObjectId,
+      content
+    })
+  });
+}
+
+// R15/R16 - Yorumları görüntüleme
+export async function getCommentsBySpaceObject(spaceObjectId) {
+  return request(`/comments/${spaceObjectId}`);
+}
+
+// R16 - Yorum güncelleme
+export async function updateComment(commentId, content) {
+  return request(`/comments/${commentId}`, {
+    method: "PUT",
+    body: JSON.stringify({
+      content
+    })
+  });
+}
+
+// R16 - Yorum silme
+export async function deleteComment(commentId) {
+  return request(`/comments/${commentId}`, {
+    method: "DELETE"
+  });
 }

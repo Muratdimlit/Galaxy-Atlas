@@ -73,7 +73,7 @@ export default function CompareScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>R7 - Karşılaştırma</Text>
+      <Text style={styles.title}> Karşılaştırma</Text>
       <Text style={styles.subtitle}>
         İki uzay nesnesi seçilir ve backend compare endpointi ile karşılaştırılır.
       </Text>

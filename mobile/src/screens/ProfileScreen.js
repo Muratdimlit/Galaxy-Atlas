@@ -138,7 +138,7 @@ export default function ProfileScreen({ navigation }) {
         {loading ? (
           <ActivityIndicator color="#ffffff" />
         ) : (
-          <Text style={styles.buttonText}>R3 - Profili Güncelle</Text>
+          <Text style={styles.buttonText}> Profili Güncelle</Text>
         )}
       </TouchableOpacity>
 
@@ -147,7 +147,7 @@ export default function ProfileScreen({ navigation }) {
         onPress={handleDeleteAccount}
         disabled={loading}
       >
-        <Text style={styles.buttonText}>R4 - Hesabı Sil</Text>
+        <Text style={styles.buttonText}> Hesabı Sil</Text>
       </TouchableOpacity>
     </View>
   );

@@ -6,7 +6,7 @@ export default function HomeScreen({ navigation }) {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.title}>Galaxy Atlas</Text>
-      
+
 
       <TouchableOpacity style={styles.card} onPress={() => navigation.navigate("SpaceObjects")}>
         <Text style={styles.cardTitle}> Uzay Nesnelerini Listeleme</Text>
@@ -30,6 +30,23 @@ export default function HomeScreen({ navigation }) {
 
       <TouchableOpacity style={styles.logoutButton} onPress={() => navigation.replace("Login")}>
         <Text style={styles.logoutText}>Çıkış Yap</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.card} onPress={() => navigation.navigate("Favorites")}>
+        <Text style={styles.cardTitle}> Favoriler</Text>
+        <Text style={styles.cardText}>Favoriye ekleme, çıkarma ve favori listesini görüntüleme.</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.card} onPress={() => navigation.navigate("Map")}>
+        <Text style={styles.cardTitle}>Harita</Text>
+        <Text style={styles.cardText}>
+          Asteroid, uydu ve roketleri harita üzerinde gösterme.
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.card} onPress={() => navigation.navigate("Comments")}>
+        <Text style={styles.cardTitle}> Yorumlar</Text>
+        <Text style={styles.cardText}>
+          Yorum yapma, yorum güncelleme ve yorum silme.
+        </Text>
       </TouchableOpacity>
     </ScrollView>
   );
