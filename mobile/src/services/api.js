@@ -11,10 +11,16 @@ async function request(endpoint, options = {}) {
       }
     });
 
-    const data = await response.json();
+    let data = null;
+
+    try {
+      data = await response.json();
+    } catch {
+      data = null;
+    }
 
     if (!response.ok) {
-      throw new Error(data.message || "İstek sırasında hata oluştu.");
+      throw new Error(data?.message || "İstek sırasında hata oluştu.");
     }
 
     return data;
@@ -23,6 +29,7 @@ async function request(endpoint, options = {}) {
   }
 }
 
+// R1 - Hesap oluşturma
 export async function registerUser(name, email, password) {
   return request("/auth/register", {
     method: "POST",
@@ -34,6 +41,7 @@ export async function registerUser(name, email, password) {
   });
 }
 
+// R2 - Giriş yapma
 export async function loginUser(email, password) {
   return request("/auth/login", {
     method: "POST",
@@ -44,6 +52,7 @@ export async function loginUser(email, password) {
   });
 }
 
+// R3 - Profil güncelleme
 export async function updateUser(id, name, email, password) {
   const body = {
     name,
@@ -60,8 +69,41 @@ export async function updateUser(id, name, email, password) {
   });
 }
 
+// R4 - Hesap silme
 export async function deleteUser(id) {
   return request(`/auth/delete/${id}`, {
     method: "DELETE"
   });
+}
+
+// R5 - Uzay nesnelerini listeleme
+export async function getSpaceObjects() {
+  return request("/space-objects");
+}
+
+// R6 - Uzay nesnesi detay görüntüleme
+export async function getSpaceObjectById(id) {
+  return request(`/space-objects/${id}`);
+}
+
+// R7 - Uzay nesnelerini karşılaştırma
+export async function compareSpaceObjects(id1, id2) {
+  return request(`/space-objects/compare?id1=${id1}&id2=${id2}`);
+}
+
+// R8 - Filtreleme
+export async function filterSpaceObjects(type) {
+  if (type === "ASTEROID") {
+    return request("/space-objects/asteroids");
+  }
+
+  if (type === "SATELLITE") {
+    return request("/space-objects/satellites");
+  }
+
+  if (type === "ROCKET") {
+    return request("/space-objects/rockets");
+  }
+
+  return request("/space-objects");
 }

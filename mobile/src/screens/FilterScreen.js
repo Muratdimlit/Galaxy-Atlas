@@ -1,54 +1,89 @@
 
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, FlatList, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  FlatList,
+  StyleSheet,
+  ActivityIndicator,
+  Alert
+} from "react-native";
+import { filterSpaceObjects } from "../services/api";
 
-const objects = [
-  { id: 1, name: "ISS", type: "Satellite" },
-  { id: 2, name: "Apophis", type: "Asteroid" },
-  { id: 3, name: "Falcon 9", type: "Rocket" },
-  { id: 4, name: "Hubble", type: "Satellite" }
-];
+export default function FilterScreen({ navigation }) {
+  const [selectedType, setSelectedType] = useState("ALL");
+  const [objects, setObjects] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-export default function FilterScreen() {
-  const [selectedType, setSelectedType] = useState("All");
+  const handleFilter = async (type) => {
+    try {
+      setSelectedType(type);
+      setLoading(true);
 
-  const filteredObjects =
-    selectedType === "All"
-      ? objects
-      : objects.filter((item) => item.type === selectedType);
+      const data = await filterSpaceObjects(type);
+      setObjects(data || []);
+    } catch (error) {
+      Alert.alert("Filtreleme Hatası", error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderObject = ({ item }) => (
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => navigation.navigate("SpaceObjectDetail", { id: item.id })}
+    >
+      <Text style={styles.name}>{item.name}</Text>
+      <Text style={styles.type}>{item.type}</Text>
+      <Text style={styles.description}>
+        {item.description || "Açıklama bulunmuyor."}
+      </Text>
+    </TouchableOpacity>
+  );
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Filtreleme</Text>
+      <Text style={styles.title}>R8 - Filtreleme</Text>
       <Text style={styles.subtitle}>
-        R8 - Uzay nesnelerini belirli kriterlere göre filtreleme.
+        Uzay nesneleri türlerine göre backend üzerinden filtrelenir.
       </Text>
 
       <View style={styles.filterRow}>
-        {["All", "Satellite", "Asteroid", "Rocket"].map((type) => (
+        {[
+          { label: "Tümü", value: "ALL" },
+          { label: "Asteroid", value: "ASTEROID" },
+          { label: "Uydu", value: "SATELLITE" },
+          { label: "Roket", value: "ROCKET" }
+        ].map((type) => (
           <TouchableOpacity
-            key={type}
+            key={type.value}
             style={[
               styles.filterButton,
-              selectedType === type && styles.activeButton
+              selectedType === type.value && styles.activeButton
             ]}
-            onPress={() => setSelectedType(type)}
+            onPress={() => handleFilter(type.value)}
           >
-            <Text style={styles.filterText}>{type}</Text>
+            <Text style={styles.filterText}>{type.label}</Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      <FlatList
-        data={filteredObjects}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <Text style={styles.name}>{item.name}</Text>
-            <Text style={styles.type}>{item.type}</Text>
-          </View>
-        )}
-      />
+      {loading ? (
+        <ActivityIndicator size="large" color="#4f7cff" />
+      ) : (
+        <FlatList
+          data={objects}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderObject}
+          ListEmptyComponent={
+            <Text style={styles.emptyText}>
+              Filtrelemek için yukarıdan bir tür seç.
+            </Text>
+          }
+        />
+      )}
     </View>
   );
 }
@@ -107,5 +142,14 @@ const styles = StyleSheet.create({
   type: {
     color: "#8fb3ff",
     marginTop: 4
+  },
+  description: {
+    color: "#b7c0d8",
+    marginTop: 6
+  },
+  emptyText: {
+    color: "#b7c0d8",
+    textAlign: "center",
+    marginTop: 25
   }
 });
