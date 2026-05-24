@@ -1,24 +1,102 @@
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert
+  Alert,
+  ActivityIndicator
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { updateUser, deleteUser } from "../services/api";
 
-export default function ProfileScreen() {
-  const [name, setName] = useState("Murat");
-  const [email, setEmail] = useState("murat@example.com");
+export default function ProfileScreen({ navigation }) {
+  const [userId, setUserId] = useState(null);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const updateProfile = () => {
-    Alert.alert("Profil Güncelleme", "R3 profil güncelleme ekranı çalışıyor.");
+  useEffect(() => {
+    loadUser();
+  }, []);
+
+  const loadUser = async () => {
+    const storedUser = await AsyncStorage.getItem("user");
+
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      setUserId(user.id);
+      setName(user.name || "");
+      setEmail(user.email || "");
+    }
   };
 
-  const deleteAccount = () => {
-    Alert.alert("Hesap Silme", "R4 hesap silme ekranı çalışıyor.");
+  const handleUpdateProfile = async () => {
+    if (!userId) {
+      Alert.alert("Hata", "Kullanıcı bilgisi bulunamadı. Tekrar giriş yap.");
+      return;
+    }
+
+    if (!name || !email) {
+      Alert.alert("Eksik Bilgi", "Ad ve e-posta alanları boş bırakılamaz.");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const data = await updateUser(userId, name, email, password);
+
+      await AsyncStorage.setItem("user", JSON.stringify(data.user));
+
+      Alert.alert("Başarılı", data.message || "Profil güncellendi.");
+      setPassword("");
+    } catch (error) {
+      Alert.alert("Güncelleme Hatası", error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!userId) {
+      Alert.alert("Hata", "Kullanıcı bilgisi bulunamadı.");
+      return;
+    }
+
+    Alert.alert(
+      "Hesabı Sil",
+      "Hesabını silmek istediğine emin misin?",
+      [
+        {
+          text: "Vazgeç",
+          style: "cancel"
+        },
+        {
+          text: "Sil",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setLoading(true);
+
+              const data = await deleteUser(userId);
+
+              await AsyncStorage.removeItem("user");
+
+              Alert.alert("Başarılı", data.message || "Hesap silindi.");
+              navigation.replace("Login");
+            } catch (error) {
+              Alert.alert("Silme Hatası", error.message);
+            } finally {
+              setLoading(false);
+            }
+          }
+        }
+      ]
+    );
   };
 
   return (
@@ -40,13 +118,35 @@ export default function ProfileScreen() {
         placeholder="E-posta"
         placeholderTextColor="#8b949e"
         autoCapitalize="none"
+        keyboardType="email-address"
       />
 
-      <TouchableOpacity style={styles.button} onPress={updateProfile}>
-        <Text style={styles.buttonText}>R3 - Profili Güncelle</Text>
+      <TextInput
+        style={styles.input}
+        value={password}
+        onChangeText={setPassword}
+        placeholder="Yeni şifre boş bırakılabilir"
+        placeholderTextColor="#8b949e"
+        secureTextEntry
+      />
+
+      <TouchableOpacity
+        style={styles.button}
+        onPress={handleUpdateProfile}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color="#ffffff" />
+        ) : (
+          <Text style={styles.buttonText}>R3 - Profili Güncelle</Text>
+        )}
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.deleteButton} onPress={deleteAccount}>
+      <TouchableOpacity
+        style={styles.deleteButton}
+        onPress={handleDeleteAccount}
+        disabled={loading}
+      >
         <Text style={styles.buttonText}>R4 - Hesabı Sil</Text>
       </TouchableOpacity>
     </View>

@@ -6,25 +6,25 @@ export default function HomeScreen({ navigation }) {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.title}>Galaxy Atlas</Text>
-      <Text style={styles.subtitle}>Murat Gereksinimleri</Text>
+      
 
       <TouchableOpacity style={styles.card} onPress={() => navigation.navigate("SpaceObjects")}>
-        <Text style={styles.cardTitle}>R5 - Uzay Nesnelerini Listeleme</Text>
+        <Text style={styles.cardTitle}> Uzay Nesnelerini Listeleme</Text>
         <Text style={styles.cardText}>Asteroid, uydu ve roketleri listele.</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.card} onPress={() => navigation.navigate("Filter")}>
-        <Text style={styles.cardTitle}>R8 - Filtreleme</Text>
+        <Text style={styles.cardTitle}> Filtreleme</Text>
         <Text style={styles.cardText}>Uzay nesnelerini türe göre filtrele.</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.card} onPress={() => navigation.navigate("Compare")}>
-        <Text style={styles.cardTitle}>R7 - Karşılaştırma</Text>
+        <Text style={styles.cardTitle}>Karşılaştırma</Text>
         <Text style={styles.cardText}>İki uzay nesnesini karşılaştır.</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.card} onPress={() => navigation.navigate("Profile")}>
-        <Text style={styles.cardTitle}>R3 / R4 - Profil İşlemleri</Text>
+        <Text style={styles.cardTitle}>Profil İşlemleri</Text>
         <Text style={styles.cardText}>Profil güncelleme ve hesap silme.</Text>
       </TouchableOpacity>
 

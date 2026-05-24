@@ -6,21 +6,37 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert
+  Alert,
+  ActivityIndicator
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { loginUser } from "../services/api";
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert("Eksik Bilgi", "E-posta ve şifre alanlarını doldur.");
       return;
     }
 
-    // REST API bağlantısını bir sonraki adımda buraya ekleyeceğiz.
-    navigation.replace("Home");
+    try {
+      setLoading(true);
+
+      const data = await loginUser(email, password);
+
+      await AsyncStorage.setItem("user", JSON.stringify(data.user));
+
+      Alert.alert("Başarılı", data.message || "Giriş başarılı.");
+      navigation.replace("Home", { user: data.user });
+    } catch (error) {
+      Alert.alert("Giriş Hatası", error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -35,6 +51,7 @@ export default function LoginScreen({ navigation }) {
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
+        keyboardType="email-address"
       />
 
       <TextInput
@@ -46,8 +63,16 @@ export default function LoginScreen({ navigation }) {
         secureTextEntry
       />
 
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Giriş Yap</Text>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={handleLogin}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color="#ffffff" />
+        ) : (
+          <Text style={styles.buttonText}>Giriş Yap</Text>
+        )}
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => navigation.navigate("Register")}>

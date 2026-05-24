@@ -6,23 +6,35 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert
+  Alert,
+  ActivityIndicator
 } from "react-native";
+import { registerUser } from "../services/api";
 
 export default function RegisterScreen({ navigation }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (!name || !email || !password) {
       Alert.alert("Eksik Bilgi", "Ad, e-posta ve şifre alanlarını doldur.");
       return;
     }
 
-    // REST API bağlantısını bir sonraki adımda buraya ekleyeceğiz.
-    Alert.alert("Başarılı", "Kayıt ekranı çalışıyor.");
-    navigation.navigate("Login");
+    try {
+      setLoading(true);
+
+      const data = await registerUser(name, email, password);
+
+      Alert.alert("Başarılı", data.message || "Kayıt başarılı.");
+      navigation.navigate("Login");
+    } catch (error) {
+      Alert.alert("Kayıt Hatası", error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -44,6 +56,7 @@ export default function RegisterScreen({ navigation }) {
         value={email}
         onChangeText={setEmail}
         autoCapitalize="none"
+        keyboardType="email-address"
       />
 
       <TextInput
@@ -55,8 +68,16 @@ export default function RegisterScreen({ navigation }) {
         secureTextEntry
       />
 
-      <TouchableOpacity style={styles.button} onPress={handleRegister}>
-        <Text style={styles.buttonText}>Kayıt Ol</Text>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={handleRegister}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color="#ffffff" />
+        ) : (
+          <Text style={styles.buttonText}>Kayıt Ol</Text>
+        )}
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => navigation.navigate("Login")}>
