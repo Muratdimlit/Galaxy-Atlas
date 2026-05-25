@@ -18,6 +18,7 @@ import {
     updateComment,
     deleteComment
 } from "../services/api";
+import SpaceBackground from "../components/SpaceBackground";
 
 export default function CommentsScreen() {
     const [user, setUser] = useState(null);
@@ -157,8 +158,9 @@ export default function CommentsScreen() {
     }
 
     return (
+        <SpaceBackground>
         <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-            <Text style={styles.title}>Berra - Yorumlar</Text>
+            <Text style={styles.title}> Yorumlar</Text>
             <Text style={styles.subtitle}>
                 yorum yapma, yorum güncelleme ve silme.
             </Text>
@@ -196,7 +198,7 @@ export default function CommentsScreen() {
 
                     <TouchableOpacity style={styles.button} onPress={handleSubmitComment}>
                         <Text style={styles.buttonText}>
-                            {editingCommentId ? "R16 - Yorumu Güncelle" : "R15 - Yorum Ekle"}
+                            {editingCommentId ? " Yorumu Güncelle" : " Yorum Ekle"}
                         </Text>
                     </TouchableOpacity>
 
@@ -221,41 +223,58 @@ export default function CommentsScreen() {
                         ListEmptyComponent={
                             <Text style={styles.emptyText}>Bu nesne için yorum yok.</Text>
                         }
-                        renderItem={({ item }) => (
-                            <View style={styles.commentCard}>
-                                <Text style={styles.commentText}>{item.content}</Text>
-                                <Text style={styles.commentMeta}>
-                                    User ID: {item.userId} | SpaceObject ID: {item.spaceObjectId}
-                                </Text>
+                       renderItem={({ item }) => (
+  <View style={styles.commentCard}>
+    <View style={styles.commentHeader}>
+      <View style={styles.avatarBox}>
+        <Text style={styles.avatarText}>
+          {(item.userName || "K").charAt(0).toUpperCase()}
+        </Text>
+      </View>
 
-                                <View style={styles.commentActions}>
-                                    <TouchableOpacity
-                                        style={styles.editButton}
-                                        onPress={() => handleEditComment(item)}
-                                    >
-                                        <Text style={styles.smallButtonText}>Güncelle</Text>
-                                    </TouchableOpacity>
+      <View style={styles.commentUserInfo}>
+        <Text style={styles.commentUserName}>
+          {item.userName || `Kullanıcı #${item.userId}`}
+        </Text>
+        <Text style={styles.commentMeta}>
+          Bu nesne hakkında yorum yaptı
+        </Text>
+      </View>
+    </View>
 
-                                    <TouchableOpacity
-                                        style={styles.deleteButton}
-                                        onPress={() => handleDeleteComment(item.id)}
-                                    >
-                                        <Text style={styles.smallButtonText}>Sil</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-                        )}
+    <Text style={styles.commentText}>{item.content}</Text>
+
+    {Number(item.userId) === Number(user?.id) && (
+      <View style={styles.commentActions}>
+        <TouchableOpacity
+          style={styles.editButton}
+          onPress={() => handleEditComment(item)}
+        >
+          <Text style={styles.smallButtonText}>Güncelle</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={() => handleDeleteComment(item.id)}
+        >
+          <Text style={styles.smallButtonText}>Sil</Text>
+        </TouchableOpacity>
+      </View>
+    )}
+  </View>
+)}
                     />
                 </>
             )}
         </ScrollView>
+        </SpaceBackground>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#0b1020"
+        backgroundColor: "transparent"
     },
     content: {
         padding: 20,
@@ -345,18 +364,49 @@ const styles = StyleSheet.create({
         marginBottom: 10
     },
     commentText: {
-        color: "#ffffff",
-        fontSize: 16
-    },
+  color: "#ffffff",
+  fontSize: 16,
+  lineHeight: 23,
+  marginTop: 4
+},
     commentMeta: {
-        color: "#8fb3ff",
-        marginTop: 8,
-        fontSize: 12
-    },
+  color: "#8fb3ff",
+  marginTop: 3,
+  fontSize: 12
+},
     commentActions: {
         flexDirection: "row",
         marginTop: 12
     },
+    commentHeader: {
+  flexDirection: "row",
+  alignItems: "center",
+  marginBottom: 12
+},
+avatarBox: {
+  width: 42,
+  height: 42,
+  borderRadius: 21,
+  backgroundColor: "#1a2a4a",
+  borderWidth: 1,
+  borderColor: "#314878",
+  justifyContent: "center",
+  alignItems: "center",
+  marginRight: 12
+},
+avatarText: {
+  color: "#ffffff",
+  fontSize: 18,
+  fontWeight: "900"
+},
+commentUserInfo: {
+  flex: 1
+},
+commentUserName: {
+  color: "#ffffff",
+  fontSize: 15,
+  fontWeight: "900"
+},
     editButton: {
         backgroundColor: "#4f7cff",
         paddingVertical: 8,

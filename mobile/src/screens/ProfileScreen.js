@@ -11,6 +11,8 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { updateUser, deleteUser } from "../services/api";
+import SpaceBackground from "../components/SpaceBackground";
+
 
 export default function ProfileScreen({ navigation }) {
   const [userId, setUserId] = useState(null);
@@ -100,6 +102,7 @@ export default function ProfileScreen({ navigation }) {
   };
 
   return (
+    <SpaceBackground>
     <View style={styles.container}>
       <Text style={styles.title}>Profil</Text>
 
@@ -150,13 +153,14 @@ export default function ProfileScreen({ navigation }) {
         <Text style={styles.buttonText}> Hesabı Sil</Text>
       </TouchableOpacity>
     </View>
+    </SpaceBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0b1020",
+    backgroundColor: "transparent",
     padding: 20,
     paddingTop: 55
   },

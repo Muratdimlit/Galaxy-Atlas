@@ -13,7 +13,11 @@ public class Comment {
     private Long userId;
     private Long spaceObjectId;
 
+    @Column(length = 1000)
     private String content;
+
+    @Transient
+    private String userName;
 
     public Comment() {
     }
@@ -34,6 +38,10 @@ public class Comment {
         return content;
     }
 
+    public String getUserName() {
+        return userName;
+    }
+
     public void setId(Long id) {
         this.id = id;
     }
@@ -48,5 +56,9 @@ public class Comment {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 }

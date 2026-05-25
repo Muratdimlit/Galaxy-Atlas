@@ -11,6 +11,8 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { loginUser } from "../services/api";
+import SpaceBackground from "../components/SpaceBackground";
+
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
@@ -40,6 +42,7 @@ export default function LoginScreen({ navigation }) {
   };
 
   return (
+    <SpaceBackground>
     <View style={styles.container}>
       <Text style={styles.title}>Galaxy Atlas</Text>
       <Text style={styles.subtitle}>Giriş Yap</Text>
@@ -79,13 +82,14 @@ export default function LoginScreen({ navigation }) {
         <Text style={styles.link}>Hesabın yok mu? Kayıt ol</Text>
       </TouchableOpacity>
     </View>
+    </SpaceBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0b1020",
+    backgroundColor: "transparent",
     justifyContent: "center",
     padding: 24
   },

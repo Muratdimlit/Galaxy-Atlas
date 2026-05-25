@@ -10,6 +10,8 @@ import {
   ActivityIndicator
 } from "react-native";
 import { registerUser } from "../services/api";
+import SpaceBackground from "../components/SpaceBackground";
+
 
 export default function RegisterScreen({ navigation }) {
   const [name, setName] = useState("");
@@ -38,6 +40,7 @@ export default function RegisterScreen({ navigation }) {
   };
 
   return (
+    <SpaceBackground>
     <View style={styles.container}>
       <Text style={styles.title}>Hesap Oluştur</Text>
 
@@ -84,13 +87,14 @@ export default function RegisterScreen({ navigation }) {
         <Text style={styles.link}>Zaten hesabın var mı? Giriş yap</Text>
       </TouchableOpacity>
     </View>
+    </SpaceBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0b1020",
+    backgroundColor: "transparent",
     justifyContent: "center",
     padding: 24
   },

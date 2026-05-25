@@ -15,6 +15,8 @@ import {
     removeFavorite,
     getFavoritesByUser
 } from "../services/api";
+import SpaceBackground from "../components/SpaceBackground";
+
 
 export default function FavoritesScreen() {
     const [user, setUser] = useState(null);
@@ -105,7 +107,7 @@ export default function FavoritesScreen() {
                         }
                     >
                         <Text style={styles.buttonText}>
-                            {favorite ? "R10 Çıkar" : "R9 Ekle"}
+                            {favorite ? " Çıkar" : " Ekle"}
                         </Text>
                     </TouchableOpacity>
                 </View>
@@ -123,10 +125,11 @@ export default function FavoritesScreen() {
     }
 
     return (
+        <SpaceBackground>
         <View style={styles.container}>
-            <Text style={styles.title}>Berra - Favoriler</Text>
+            <Text style={styles.title}> Favoriler</Text>
             <Text style={styles.subtitle}>
-                R9 favoriye ekleme, R10 favoriden çıkarma, R11 favori listesini görüntüleme.
+                favoriye ekleme, favoriden çıkarma,  favori listesini görüntüleme.
             </Text>
 
             <Text style={styles.sectionTitle}> Favori Listesi</Text>
@@ -152,13 +155,14 @@ export default function FavoritesScreen() {
                 refreshing={loading}
             />
         </View>
+        </SpaceBackground>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#0b1020",
+        backgroundColor: "transparent",
         padding: 20,
         paddingTop: 55
     },

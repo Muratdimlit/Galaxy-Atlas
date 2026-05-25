@@ -10,6 +10,8 @@ import {
   Alert
 } from "react-native";
 import { getSpaceObjects, compareSpaceObjects } from "../services/api";
+import SpaceBackground from "../components/SpaceBackground";
+
 
 export default function CompareScreen() {
   const [objects, setObjects] = useState([]);
@@ -72,6 +74,7 @@ export default function CompareScreen() {
   };
 
   return (
+    <SpaceBackground>
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <Text style={styles.title}> Karşılaştırma</Text>
       <Text style={styles.subtitle}>
@@ -148,13 +151,14 @@ export default function CompareScreen() {
         </View>
       )}
     </ScrollView>
+    </SpaceBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0b1020"
+    backgroundColor: "transparent"
   },
   content: {
     padding: 20,
