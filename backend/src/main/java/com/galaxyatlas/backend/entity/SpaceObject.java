@@ -1,10 +1,11 @@
 package com.galaxyatlas.backend.entity;
 
 import jakarta.persistence.*;
+import java.io.Serializable;
 
 @Entity
 @Table(name = "space_objects")
-public class SpaceObject {
+public class SpaceObject implements Serializable{
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

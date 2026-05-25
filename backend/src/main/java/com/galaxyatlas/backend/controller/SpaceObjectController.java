@@ -5,6 +5,8 @@ import com.galaxyatlas.backend.entity.SpaceObject;
 import com.galaxyatlas.backend.repository.SpaceObjectRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -21,10 +23,11 @@ public class SpaceObjectController {
         this.repository = repository;
     }
 
-    // R5 - Tüm uzay nesnelerini listeleme
+    @Cacheable(value = "spaceObjects")
     @GetMapping
     public List<SpaceObject> getAll() {
-        return repository.findAll();
+    System.out.println("PostgreSQL'den uzay nesneleri getirildi.");
+    return repository.findAll();
     }
 
     // R8 - ASTEROID filtreleme
@@ -90,9 +93,10 @@ public class SpaceObjectController {
         return ResponseEntity.ok(spaceObject);
     }
 
-    // Test için yeni uzay nesnesi ekleme
-    @PostMapping
-    public SpaceObject add(@RequestBody SpaceObject obj) {
-        return repository.save(obj);
-    }
+    @CacheEvict(value = "spaceObjects", allEntries = true)
+@PostMapping
+public SpaceObject add(@RequestBody SpaceObject obj) {
+    return repository.save(obj);
+}
+
 }
