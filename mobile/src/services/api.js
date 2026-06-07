@@ -1,5 +1,5 @@
 
-const API_BASE_URL = "http://172.20.10.2:8080";
+const API_BASE_URL = "http://192.168.1.93:8080";
 
 async function request(endpoint, options = {}) {
   try {
