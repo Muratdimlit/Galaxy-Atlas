@@ -68,6 +68,84 @@ export default function SpaceObjectsScreen({ navigation }) {
     }
   };
 
+  const normalizeType = (type) => {
+    const value = String(type || "").trim().toUpperCase();
+
+    if (value === "UYDU" || value === "SATELLITE") {
+      return "SATELLITE";
+    }
+
+    if (value === "ROKET" || value === "ROCKET") {
+      return "ROCKET";
+    }
+
+    if (value === "ASTEROID" || value === "ASTEROİD" || value === "ASTEROIT") {
+      return "ASTEROID";
+    }
+
+    return value;
+  };
+
+  const getTypeIcon = (type) => {
+    const normalizedType = normalizeType(type);
+
+    if (normalizedType === "SATELLITE") {
+      return "🛰️";
+    }
+
+    if (normalizedType === "ROCKET") {
+      return "🚀";
+    }
+
+    if (normalizedType === "ASTEROID") {
+      return "☄️";
+    }
+
+    return "🌌";
+  };
+
+  const getTypeTheme = (type) => {
+    const normalizedType = normalizeType(type);
+
+    if (normalizedType === "SATELLITE") {
+      return {
+        card: styles.satelliteCard,
+        badge: styles.satelliteBadge,
+        glow: styles.satelliteGlow,
+        location: styles.satelliteLocation,
+        label: "UYDU"
+      };
+    }
+
+    if (normalizedType === "ROCKET") {
+      return {
+        card: styles.rocketCard,
+        badge: styles.rocketBadge,
+        glow: styles.rocketGlow,
+        location: styles.rocketLocation,
+        label: "ROKET"
+      };
+    }
+
+    if (normalizedType === "ASTEROID") {
+      return {
+        card: styles.asteroidCard,
+        badge: styles.asteroidBadge,
+        glow: styles.asteroidGlow,
+        location: styles.asteroidLocation,
+        label: "ASTEROID"
+      };
+    }
+
+    return {
+      card: styles.defaultCard,
+      badge: styles.defaultBadge,
+      glow: styles.defaultGlow,
+      location: styles.defaultLocation,
+      label: type || "NESNE"
+    };
+  };
+
   const isFavorite = (spaceObjectId) => {
     return favorites.some(
       (fav) => Number(fav.spaceObjectId) === Number(spaceObjectId)
@@ -105,10 +183,11 @@ export default function SpaceObjectsScreen({ navigation }) {
 
   const renderObject = ({ item }) => {
     const favorite = isFavorite(item.id);
+    const theme = getTypeTheme(item.type);
 
     return (
       <TouchableOpacity
-        style={styles.card}
+        style={[styles.card, theme.card]}
         activeOpacity={0.9}
         onPress={() =>
           navigation.navigate("SpaceObjectDetail", {
@@ -118,20 +197,28 @@ export default function SpaceObjectsScreen({ navigation }) {
           })
         }
       >
+        <View style={[styles.glowBar, theme.glow]} />
+
         <View style={styles.cardHeader}>
           <View style={styles.cardTitleArea}>
-            <Text style={styles.name}>{item.name}</Text>
+            <View style={styles.nameRow}>
+              <Text style={styles.typeIcon}>{getTypeIcon(item.type)}</Text>
+              <Text style={styles.name}>{item.name}</Text>
+            </View>
+
             <Text style={styles.description}>
               {item.description || "Açıklama bulunmuyor."}
             </Text>
           </View>
 
-          <Text style={styles.badge}>{item.type}</Text>
+          <Text style={[styles.badge, theme.badge]}>{theme.label}</Text>
         </View>
 
-        <Text style={styles.location}>
-          Enlem: {item.latitude} | Boylam: {item.longitude}
-        </Text>
+        <View style={styles.infoBox}>
+          <Text style={[styles.location, theme.location]}>
+            📍 Enlem: {item.latitude} | Boylam: {item.longitude}
+          </Text>
+        </View>
 
         <View style={styles.actionRow}>
           <TouchableOpacity
@@ -235,12 +322,47 @@ const styles = StyleSheet.create({
     paddingBottom: 35
   },
   card: {
-    backgroundColor: "rgba(16, 23, 42, 0.78)",
-    borderColor: "rgba(110, 143, 255, 0.28)",
-    borderWidth: 1,
-    borderRadius: 20,
+    borderWidth: 1.5,
+    borderRadius: 22,
     padding: 16,
-    marginBottom: 14
+    marginBottom: 15,
+    overflow: "hidden",
+    position: "relative"
+  },
+  satelliteCard: {
+    backgroundColor: "rgba(11, 18, 48, 0.88)",
+    borderColor: "rgba(91, 141, 255, 0.75)"
+  },
+  rocketCard: {
+    backgroundColor: "rgba(47, 14, 24, 0.88)",
+    borderColor: "rgba(255, 88, 88, 0.8)"
+  },
+  asteroidCard: {
+    backgroundColor: "rgba(45, 30, 9, 0.9)",
+    borderColor: "rgba(255, 176, 59, 0.85)"
+  },
+  defaultCard: {
+    backgroundColor: "rgba(16, 23, 42, 0.82)",
+    borderColor: "rgba(110, 143, 255, 0.35)"
+  },
+  glowBar: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 7
+  },
+  satelliteGlow: {
+    backgroundColor: "#4f7cff"
+  },
+  rocketGlow: {
+    backgroundColor: "#ff3b3b"
+  },
+  asteroidGlow: {
+    backgroundColor: "#ffad32"
+  },
+  defaultGlow: {
+    backgroundColor: "#8b5cf6"
   },
   cardHeader: {
     flexDirection: "row",
@@ -252,15 +374,23 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingRight: 10
   },
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8
+  },
+  typeIcon: {
+    fontSize: 24,
+    marginRight: 8
+  },
   name: {
     color: "#ffffff",
     fontSize: 21,
     fontWeight: "900",
-    marginBottom: 8
+    flexShrink: 1
   },
   badge: {
     color: "#ffffff",
-    backgroundColor: "#4f7cff",
     paddingVertical: 7,
     paddingHorizontal: 12,
     borderRadius: 999,
@@ -269,17 +399,46 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     letterSpacing: 1
   },
+  satelliteBadge: {
+    backgroundColor: "rgba(79, 124, 255, 0.95)"
+  },
+  rocketBadge: {
+    backgroundColor: "rgba(255, 59, 59, 0.95)"
+  },
+  asteroidBadge: {
+    backgroundColor: "rgba(255, 173, 50, 0.95)"
+  },
+  defaultBadge: {
+    backgroundColor: "#4f7cff"
+  },
   description: {
-    color: "#c6d0ea",
+    color: "#d8e0f5",
     fontSize: 15,
     lineHeight: 22
   },
-  location: {
-    color: "#8fb3ff",
+  infoBox: {
+    backgroundColor: "rgba(255, 255, 255, 0.06)",
+    borderRadius: 14,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
     marginTop: 4,
-    marginBottom: 14,
+    marginBottom: 14
+  },
+  location: {
     fontSize: 14,
-    fontWeight: "700"
+    fontWeight: "800"
+  },
+  satelliteLocation: {
+    color: "#9dbdff"
+  },
+  rocketLocation: {
+    color: "#ffaaaa"
+  },
+  asteroidLocation: {
+    color: "#ffd38a"
+  },
+  defaultLocation: {
+    color: "#8fb3ff"
   },
   actionRow: {
     flexDirection: "row",

@@ -71,7 +71,7 @@ export default function SpaceObjectDetailScreen({ route, navigation }) {
     );
   }
 
-  const images = getObjectImages(spaceObject.name);
+  const images = getObjectImages(spaceObject.name, spaceObject.type);
 
   return (
     <SpaceBackground>

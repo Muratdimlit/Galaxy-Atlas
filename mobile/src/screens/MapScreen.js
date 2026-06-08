@@ -38,22 +38,58 @@ export default function MapScreen() {
   };
 
   const normalizeType = (type) => {
-  const value = String(type || "").trim().toUpperCase();
+    const value = String(type || "").trim().toUpperCase();
 
-  if (value === "UYDU" || value === "SATELLITE") {
-    return "SATELLITE";
-  }
+    if (value === "UYDU" || value === "SATELLITE") {
+      return "SATELLITE";
+    }
 
-  if (value === "ROKET" || value === "ROCKET") {
-    return "ROCKET";
-  }
+    if (value === "ROKET" || value === "ROCKET") {
+      return "ROCKET";
+    }
 
-  if (value === "ASTEROID" || value === "ASTEROİD" || value === "ASTEROIT") {
-    return "ASTEROID";
-  }
+    if (value === "ASTEROID" || value === "ASTEROİD" || value === "ASTEROIT") {
+      return "ASTEROID";
+    }
 
-  return value;
-};
+    return value;
+  };
+
+  const getTypeIcon = (type) => {
+    const normalizedType = normalizeType(type);
+
+    if (normalizedType === "SATELLITE") {
+      return "🛰️";
+    }
+
+    if (normalizedType === "ROCKET") {
+      return "🚀";
+    }
+
+    if (normalizedType === "ASTEROID") {
+      return "☄️";
+    }
+
+    return "🌌";
+  };
+
+  const getMarkerColor = (type) => {
+    const normalizedType = normalizeType(type);
+
+    if (normalizedType === "SATELLITE") {
+      return "blue";
+    }
+
+    if (normalizedType === "ASTEROID") {
+      return "orange";
+    }
+
+    if (normalizedType === "ROCKET") {
+      return "red";
+    }
+
+    return "purple";
+  };
 
   const handleFilter = (type) => {
     setSelectedType(type);
@@ -87,7 +123,7 @@ export default function MapScreen() {
   };
 
   const getMarkerTitle = (item) => {
-    return `${item.name} (${item.type})`;
+    return `${getTypeIcon(item.type)} ${item.name} (${item.type})`;
   };
 
   const getValidObjects = () => {
@@ -158,6 +194,23 @@ export default function MapScreen() {
             <Text style={styles.filterText}>Roket</Text>
           </TouchableOpacity>
         </View>
+
+        <View style={styles.legendContainer}>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: "orange" }]} />
+            <Text style={styles.legendText}>Asteroid</Text>
+          </View>
+
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: "blue" }]} />
+            <Text style={styles.legendText}>Uydu</Text>
+          </View>
+
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: "red" }]} />
+            <Text style={styles.legendText}>Roket</Text>
+          </View>
+        </View>
       </View>
 
       <MapView
@@ -178,6 +231,7 @@ export default function MapScreen() {
             }}
             title={getMarkerTitle(item)}
             description={item.description || "Açıklama yok"}
+            pinColor={getMarkerColor(item.type)}
           />
         ))}
       </MapView>
@@ -241,6 +295,29 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontSize: 14,
     fontWeight: "800"
+  },
+  legendContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 12,
+    marginBottom: 2
+  },
+  legendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginHorizontal: 8
+  },
+  legendDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 6
+  },
+  legendText: {
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: "700"
   },
   map: {
     flex: 1
